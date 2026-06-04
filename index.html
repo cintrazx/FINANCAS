@@ -642,13 +642,24 @@ function deletar(id){
 function renderAnalise(){
   const mes=document.getElementById('sel-mes-analise').value;
   const itens=dados.filter(x=>mesKey(x.data)===mes);
-  const totalG=itens.filter(x=>x.tipo==='gasto').reduce((s,x)=>s+x.valor,0);
+
+  // Gastos que contam no saldo deste mês:
+  // - gastos SEM dataPgto (pagamento imediato)
+  // - gastos COM dataPgto cujo pagamento cai NESTE mês
+  // - gastos de meses anteriores com dataPgto neste mês
+  const gastosQueContam=dados.filter(x=>
+    x.tipo==='gasto' && (
+      (!x.dataPgto && mesKey(x.data)===mes) ||
+      (x.dataPgto && mesKey(x.dataPgto)===mes)
+    )
+  );
+  const totalG=gastosQueContam.reduce((s,x)=>s+x.valor,0);
   const totalE=itens.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+x.valor,0);
   const saldo=totalE-totalG;
   const pct=totalE>0?Math.min(100,Math.round(totalG/totalE*100)):0;
   const parMes=getParcelasMes(mes);
   const totalPar=parMes.reduce((s,p)=>s+p.valorParcela,0);
-  const gastosCat={};itens.filter(x=>x.tipo==='gasto').forEach(x=>{gastosCat[x.cat]=(gastosCat[x.cat]||0)+x.valor;});
+  const gastosCat={};gastosQueContam.forEach(x=>{gastosCat[x.cat]=(gastosCat[x.cat]||0)+x.valor;});
   const sortedG=Object.entries(gastosCat).sort((a,b)=>b[1]-a[1]);
   const maxG=sortedG[0]?.[1]||1;
   const entCat={};itens.filter(x=>x.tipo==='entrada').forEach(x=>{entCat[x.cat]=(entCat[x.cat]||0)+x.valor;});
@@ -696,7 +707,7 @@ function renderAnalise(){
           <span class="bar-val">${fmt(val)}</span>
         </div>`).join(''):'<div class="empty" style="padding:10px 0;">Sem entradas.</div>'}
     </div>
-    \${renderGastosDiferidos(mes)}`;
+    ${renderGastosDiferidos(mes)}`;
 }
 
 // Gastos diferidos: pagamento cai neste mês vindo de meses anteriores
@@ -824,7 +835,8 @@ function renderComparativo(){
   if(meses.length<1){document.getElementById('comp-content').innerHTML='<div class="card"><div class="empty">Faça lançamentos para ver o comparativo.</div></div>';return;}
   const rows=meses.map(m=>{
     const it=dados.filter(x=>mesKey(x.data)===m);
-    const g=it.filter(x=>x.tipo==='gasto').reduce((s,x)=>s+x.valor,0);
+    // gastos contam no mês de pagamento (dataPgto), não no mês do gasto
+    const g=dados.filter(x=>x.tipo==='gasto'&&((!x.dataPgto&&mesKey(x.data)===m)||(x.dataPgto&&mesKey(x.dataPgto)===m))).reduce((s,x)=>s+x.valor,0);
     const e=it.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+x.valor,0);
     return{m,g,e,saldo:e-g};
   });
