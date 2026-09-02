@@ -8,7 +8,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Minhas Finanças"/>
 <title>Minhas Finanças</title>
-<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Minhas%20Finan%C3%A7as%22%2C%22short_name%22%3A%22Finan%C3%A7as%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f0f17%22%2C%22theme_color%22%3A%22%230f0f17%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHNsZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQwIiBmaWxsPSIjMWExYTJlIi8%2BPHRleHQgeD0iOTYiIHk9IjEyOCIgZm9udC1zaXplPSIxMDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM3YzZmZjciPiQ8L3RleHQ%2BPC9zdmc%2B%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -144,15 +143,45 @@ select option{background:var(--surface2);}
 .pagamento-vencido{background:rgba(248,113,113,.07);border-left:3px solid var(--red);}
 /* TOGGLE DIFERIDO */
 .dif-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;user-select:none;}
-.dif-toggle input[type=checkbox]{display:none;}
-.dif-toggle-switch{width:42px;height:24px;background:var(--surface3);border-radius:99px;flex-shrink:0;position:relative;transition:background .2s;}
-.dif-toggle-switch::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.4);}
-.dif-toggle input:checked~.dif-toggle-switch{background:var(--accent);}
-.dif-toggle input:checked~.dif-toggle-switch::after{transform:translateX(18px);}
-.dif-toggle-label{font-size:13px;color:var(--text2);transition:color .2s;}
-.dif-toggle input:checked~.dif-toggle-label{color:var(--text);}
+.dif-toggle input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.dif-toggle-label{font-size:13px;color:var(--text2);}
 scrollbar-width:none;
 ::-webkit-scrollbar{display:none;}
+
+/* USER SCREEN */
+.user-screen{position:fixed;inset:0;background:var(--bg);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;max-width:480px;margin:0 auto;}
+.user-screen.hidden{display:none;}
+.user-logo{font-size:48px;margin-bottom:8px;}
+.user-title{font-size:22px;font-weight:600;color:var(--text);margin-bottom:6px;text-align:center;}
+.user-sub{font-size:14px;color:var(--text3);margin-bottom:32px;text-align:center;}
+.user-cards{display:flex;flex-direction:column;gap:12px;width:100%;}
+.user-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .15s;}
+.user-card:active{transform:scale(.97);}
+.user-card:hover{border-color:var(--accent);background:var(--surface2);}
+.user-card-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.user-card-info{flex:1;}
+.user-card-name{font-size:16px;font-weight:600;color:var(--text);}
+.user-card-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+.user-card-arrow{color:var(--text3);font-size:18px;}
+
+/* ONBOARDING */
+.onboard-screen{position:fixed;inset:0;background:var(--bg);z-index:410;display:flex;flex-direction:column;padding:0;max-width:480px;margin:0 auto;overflow:hidden;}
+.onboard-screen.hidden{display:none;}
+.onboard-header{padding:24px 24px 0;flex-shrink:0;}
+.onboard-step{font-size:11px;color:var(--accent2);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+.onboard-title{font-size:20px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.onboard-sub{font-size:13px;color:var(--text3);line-height:1.5;margin-bottom:20px;}
+.onboard-body{flex:1;overflow-y:auto;padding:0 24px;}
+.cat-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.cat-chip{padding:8px 14px;border-radius:99px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;}
+.cat-chip.selected{background:var(--accent-bg);border-color:var(--accent);color:var(--accent2);}
+.cat-chip .chip-check{display:none;font-size:11px;}
+.cat-chip.selected .chip-check{display:inline;}
+.onboard-custom{display:flex;gap:8px;margin-bottom:20px;}
+.onboard-custom input{flex:1;font-size:14px;padding:9px 12px;}
+.onboard-custom button{flex-shrink:0;padding:9px 14px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;}
+.onboard-footer{padding:16px 24px calc(16px + env(safe-area-inset-bottom));flex-shrink:0;border-top:1px solid var(--border);}
+.onboard-name-input{font-size:20px;font-weight:500;text-align:center;margin-bottom:4px;}
 
 /* CALENDAR PICKER */
 .date-input-wrap{position:relative;display:flex;align-items:center;}
@@ -177,6 +206,28 @@ scrollbar-width:none;
 </style>
 </head>
 <body>
+
+<!-- TELA DE USUÁRIO -->
+<div class="user-screen hidden" id="user-screen">
+  <div class="user-logo">💰</div>
+  <div class="user-title">Minhas Finanças</div>
+  <div class="user-sub">Quem vai usar agora?</div>
+  <div class="user-cards" id="user-cards"></div>
+</div>
+
+<!-- TELA DE ONBOARDING (nova usuária) -->
+<div class="onboard-screen hidden" id="onboard-screen">
+  <div class="onboard-header">
+    <button onclick="fecharOnboarding()" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:0 0 16px 0;display:flex;align-items:center;gap:4px;">‹ Voltar</button>
+    <div class="onboard-step" id="ob-step-label">Passo 1 de 3</div>
+    <div class="onboard-title" id="ob-title"></div>
+    <div class="onboard-sub" id="ob-sub"></div>
+  </div>
+  <div class="onboard-body" id="ob-body"></div>
+  <div class="onboard-footer">
+    <button class="btn btn-accent" id="ob-next-btn" onclick="obNext()">Continuar</button>
+  </div>
+</div>
 
 <!-- MODAL BACKUP -->
 <div class="modal-overlay hidden" id="modal-backup">
@@ -273,7 +324,6 @@ scrollbar-width:none;
         <div id="bloco-diferido">
           <label class="dif-toggle">
             <input type="checkbox" id="chk-diferido" onchange="toggleDiferido()"/>
-            <div class="dif-toggle-switch"></div>
             <span class="dif-toggle-label">Pagar em data diferente (prazo, Uber, boleto...)</span>
           </label>
           <div id="campo-pagamento" style="display:none;">
@@ -404,6 +454,16 @@ scrollbar-width:none;
           <button class="btn btn-danger btn-sm" onclick="abrirModal('modal-apagar')">Apagar</button>
         </div>
       </div>
+      <div class="card">
+        <div class="card-title">Conta</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label" id="cfg-usuario-nome">—</div>
+            <div class="settings-sub">Usuário atual</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="abrirTelaUsuario()">Trocar</button>
+        </div>
+      </div>
       <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--text3);">
         Minhas Finanças v2.0 · Dados salvos localmente no aparelho
       </div>
@@ -442,19 +502,61 @@ scrollbar-width:none;
 
 <script>
 // ===== CONSTANTES =====
-const CATS_GASTO=['Mercado','Gasolina','Casa','Lazer','Roupas','Carro'];
-const CATS_ENTRADA=['Uber','Clélia','Victor','99','Outros'];
 const MESES=['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+// Sugestões para onboarding de novo usuário
+const SUGESTOES_GASTO=['Mercado','Aluguel','Gasolina','Transporte','Restaurante','Lazer','Roupas','Saúde','Academia','Beleza','Farmácia','Conta de Luz','Internet','Streaming','Carro','Pets','Outros'];
+const SUGESTOES_ENTRADA=['Salário','Freelance','Pix recebido','Aluguel recebido','Vendas','Presente','Outros'];
+
+// Usuário fixo Sergio (dados já existentes preservados)
+const SERGIO={
+  id:'sergio', nome:'Sergio', emoji:'👨',
+  catsGasto:['Mercado','Gasolina','Transporte','Casa','Saúde','Lazer','Restaurante','Roupas','Investimentos','Outros'],
+  catsEntrada:['Uber','Salário cônjuge','Do filho','Renda extra','Outros'],
+  fixed:true
+};
 
 // ===== STATE =====
 let tipo='gasto';
-let dados=JSON.parse(localStorage.getItem('cf_dados')||'[]');
-let parcelas=JSON.parse(localStorage.getItem('cf_parcelas')||'[]');
+let usuarioAtual=null;
+let dados=[];
+let parcelas=[];
+
+function storageKey(uid,t){return`cf_${uid}_${t}`;}
+
+function loadUsuario(u){
+  usuarioAtual=u;
+  // migração: se Sergio, tenta pegar dados antigos sem prefixo
+  if(u.id==='sergio'){
+    const legDados=localStorage.getItem('cf_dados');
+    const legParc=localStorage.getItem('cf_parcelas');
+    if(legDados&&!localStorage.getItem(storageKey('sergio','dados'))){
+      localStorage.setItem(storageKey('sergio','dados'),legDados);
+    }
+    if(legParc&&!localStorage.getItem(storageKey('sergio','parcelas'))){
+      localStorage.setItem(storageKey('sergio','parcelas'),legParc);
+    }
+  }
+  dados=JSON.parse(localStorage.getItem(storageKey(u.id,'dados'))||'[]');
+  parcelas=JSON.parse(localStorage.getItem(storageKey(u.id,'parcelas'))||'[]');
+}
 
 function save(){
-  localStorage.setItem('cf_dados',JSON.stringify(dados));
-  localStorage.setItem('cf_parcelas',JSON.stringify(parcelas));
+  localStorage.setItem(storageKey(usuarioAtual.id,'dados'),JSON.stringify(dados));
+  localStorage.setItem(storageKey(usuarioAtual.id,'parcelas'),JSON.stringify(parcelas));
 }
+
+function getUsuarios(){
+  const extra=JSON.parse(localStorage.getItem('cf_usuarios')||'[]');
+  return[SERGIO,...extra];
+}
+
+function saveUsuariosExtra(lista){
+  localStorage.setItem('cf_usuarios',JSON.stringify(lista));
+}
+
+function getCatsGasto(){return usuarioAtual?.catsGasto||SERGIO.catsGasto;}
+function getCatsEntrada(){return usuarioAtual?.catsEntrada||SERGIO.catsEntrada;}
 
 // ===== HELPERS =====
 function fmt(v){return'R$\u00a0'+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -542,7 +644,7 @@ function setTipo(t){
   tipo=t;
   document.getElementById('tbtn-gasto').className='type-btn'+(t==='gasto'?' active-gasto':'');
   document.getElementById('tbtn-entrada').className='type-btn'+(t==='entrada'?' active-entrada':'');
-  const cats=t==='gasto'?CATS_GASTO:CATS_ENTRADA;
+  const cats=t==='gasto'?getCatsGasto():getCatsEntrada();
   document.getElementById('inp-cat').innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
   document.getElementById('lbl-cat').textContent=t==='gasto'?'Categoria do gasto':'Origem da entrada';
   document.getElementById('btn-lancar').className='btn '+(t==='gasto'?'btn-red':'btn-green');
@@ -642,24 +744,13 @@ function deletar(id){
 function renderAnalise(){
   const mes=document.getElementById('sel-mes-analise').value;
   const itens=dados.filter(x=>mesKey(x.data)===mes);
-
-  // Gastos que contam no saldo deste mês:
-  // - gastos SEM dataPgto (pagamento imediato)
-  // - gastos COM dataPgto cujo pagamento cai NESTE mês
-  // - gastos de meses anteriores com dataPgto neste mês
-  const gastosQueContam=dados.filter(x=>
-    x.tipo==='gasto' && (
-      (!x.dataPgto && mesKey(x.data)===mes) ||
-      (x.dataPgto && mesKey(x.dataPgto)===mes)
-    )
-  );
-  const totalG=gastosQueContam.reduce((s,x)=>s+x.valor,0);
+  const totalG=itens.filter(x=>x.tipo==='gasto').reduce((s,x)=>s+x.valor,0);
   const totalE=itens.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+x.valor,0);
   const saldo=totalE-totalG;
   const pct=totalE>0?Math.min(100,Math.round(totalG/totalE*100)):0;
   const parMes=getParcelasMes(mes);
   const totalPar=parMes.reduce((s,p)=>s+p.valorParcela,0);
-  const gastosCat={};gastosQueContam.forEach(x=>{gastosCat[x.cat]=(gastosCat[x.cat]||0)+x.valor;});
+  const gastosCat={};itens.filter(x=>x.tipo==='gasto').forEach(x=>{gastosCat[x.cat]=(gastosCat[x.cat]||0)+x.valor;});
   const sortedG=Object.entries(gastosCat).sort((a,b)=>b[1]-a[1]);
   const maxG=sortedG[0]?.[1]||1;
   const entCat={};itens.filter(x=>x.tipo==='entrada').forEach(x=>{entCat[x.cat]=(entCat[x.cat]||0)+x.valor;});
@@ -724,22 +815,22 @@ function renderGastosDiferidos(mes){
     const venceu=strToDate(x.dataPgto)<=hoje;
     return`<div class="item-row">
       <div>
-        <div class="item-name">\${x.desc||x.cat}</div>
+        <div class="item-name">${x.desc||x.cat}</div>
         <div class="item-sub">
-          <span class="badge \${venceu?'badge-red':'badge-amber'}">\${venceu?'Venceu':'A pagar'} \${x.dataPgto}</span>
-          &nbsp;<span style="color:var(--text3);">gasto em \${x.data}</span>
+          <span class="badge ${venceu?'badge-red':'badge-amber'}">${venceu?'Venceu':'A pagar'} ${x.dataPgto}</span>
+          &nbsp;<span style="color:var(--text3);">gasto em ${x.data}</span>
         </div>
       </div>
-      <span class="val-red">-\${fmt(x.valor)}</span>
+      <span class="val-red">-${fmt(x.valor)}</span>
     </div>`;
   }).join('');
   return`<div class="card" style="margin-top:12px;">
     <div class="card-title">⏳ Pagamentos diferidos neste mês</div>
-    \${rows}
+    ${rows}
     <div class="divider"></div>
     <div style="display:flex;justify-content:space-between;font-size:13px;">
       <span style="color:var(--text3);">Total</span>
-      <span style="color:var(--red);font-family:var(--mono);font-weight:600;">\${fmt(total)}</span>
+      <span style="color:var(--red);font-family:var(--mono);font-weight:600;">${fmt(total)}</span>
     </div>
   </div>`;
 }
@@ -835,8 +926,7 @@ function renderComparativo(){
   if(meses.length<1){document.getElementById('comp-content').innerHTML='<div class="card"><div class="empty">Faça lançamentos para ver o comparativo.</div></div>';return;}
   const rows=meses.map(m=>{
     const it=dados.filter(x=>mesKey(x.data)===m);
-    // gastos contam no mês de pagamento (dataPgto), não no mês do gasto
-    const g=dados.filter(x=>x.tipo==='gasto'&&((!x.dataPgto&&mesKey(x.data)===m)||(x.dataPgto&&mesKey(x.dataPgto)===m))).reduce((s,x)=>s+x.valor,0);
+    const g=it.filter(x=>x.tipo==='gasto').reduce((s,x)=>s+x.valor,0);
     const e=it.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+x.valor,0);
     return{m,g,e,saldo:e-g};
   });
@@ -897,6 +987,7 @@ function renderComparativo(){
 
 // ===== CONFIG =====
 function renderConfig(){
+  document.getElementById('cfg-usuario-nome').textContent=(usuarioAtual?.emoji||'')+' '+( usuarioAtual?.nome||'—');
   document.getElementById('cfg-total-lanc').textContent=dados.length+' registros';
   document.getElementById('cfg-total-parc').textContent=parcelas.length+' itens';
   const meses=getMeses().filter(m=>dados.some(x=>mesKey(x.data)===m));
@@ -935,10 +1026,7 @@ function switchTab(name){
   if(name==='config')renderConfig();
 }
 
-// ===== INIT =====
-setTipo('gasto');
-document.getElementById('inp-data').value=todayStr();
-document.getElementById('p-inicio').value=pad(new Date().getMonth()+1)+'/'+new Date().getFullYear();
+// ===== MASKS =====
 function maskDate(e){
   let v=e.target.value.replace(/\D/g,'');
   if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);
@@ -953,7 +1041,181 @@ function maskMonthYear(e){
 document.getElementById('inp-data').addEventListener('input',maskDate);
 document.getElementById('inp-pgto').addEventListener('input',maskDate);
 document.getElementById('p-inicio').addEventListener('input',maskMonthYear);
-populateMes();renderResumoDia();renderParcelas();
+
+// ===== SELEÇÃO DE USUÁRIO =====
+function abrirTelaUsuario(){
+  document.getElementById('user-screen').classList.remove('hidden');
+  renderUserCards();
+}
+
+function fecharTelaUsuario(){
+  document.getElementById('user-screen').classList.add('hidden');
+}
+
+function renderUserCards(){
+  const usuarios=getUsuarios();
+  document.getElementById('user-cards').innerHTML=usuarios.map(u=>`
+    <div class="user-card" onclick="selecionarUsuario('${u.id}')">
+      <div class="user-card-avatar" style="background:${u.id==='sergio'?'rgba(124,111,247,.2)':'rgba(74,222,128,.2)'}">
+        ${u.emoji||'👤'}
+      </div>
+      <div class="user-card-info">
+        <div class="user-card-name">${u.nome}</div>
+        <div class="user-card-sub">${u.fixed?'Conta principal':'Conta pessoal'}</div>
+      </div>
+      <div class="user-card-arrow">›</div>
+    </div>
+  `).join('')+`
+    <div class="user-card" onclick="iniciarOnboarding()" style="border-style:dashed;">
+      <div class="user-card-avatar" style="background:rgba(251,191,36,.15)">➕</div>
+      <div class="user-card-info">
+        <div class="user-card-name">Novo usuário</div>
+        <div class="user-card-sub">Criar conta com categorias próprias</div>
+      </div>
+      <div class="user-card-arrow">›</div>
+    </div>`;
+}
+
+function selecionarUsuario(uid){
+  const u=getUsuarios().find(x=>x.id===uid);
+  if(!u)return;
+  loadUsuario(u);
+  fecharTelaUsuario();
+  // atualiza topbar com nome do usuário
+  document.getElementById('topbar-sub').textContent='Olá, '+u.nome+'!';
+  iniciarApp();
+}
+
+function iniciarApp(){
+  setTipo('gasto');
+  document.getElementById('inp-data').value=todayStr();
+  document.getElementById('p-inicio').value=pad(new Date().getMonth()+1)+'/'+new Date().getFullYear();
+  populateMes();renderResumoDia();renderParcelas();
+  switchTab('lancar');
+}
+
+// Botão de troca de usuário na topbar
+document.getElementById('topbar-title').style.cursor='pointer';
+document.getElementById('topbar-title').title='Trocar usuário';
+document.getElementById('topbar-title').onclick=()=>abrirTelaUsuario();
+
+// ===== ONBOARDING (novo usuário) =====
+let obStep=0;
+let obNome='';
+let obEmoji='';
+let obCatsGasto=[];
+let obCatsEntrada=[];
+const EMOJIS=['👩','👧','🧑','👱','🧒','👩‍💼','🧑‍💼'];
+
+function iniciarOnboarding(){
+  obStep=0;obNome='';obEmoji=EMOJIS[0];obCatsGasto=[];obCatsEntrada=[];
+  document.getElementById('user-screen').classList.add('hidden');
+  document.getElementById('onboard-screen').classList.remove('hidden');
+  renderObStep();
+}
+
+function fecharOnboarding(){
+  document.getElementById('onboard-screen').classList.add('hidden');
+  abrirTelaUsuario();
+}
+
+function renderObStep(){
+  const steps=[
+    {label:'Passo 1 de 3',title:'Qual é o seu nome?',sub:'Esse nome vai aparecer na tela de seleção.'},
+    {label:'Passo 2 de 3',title:'Quais são seus gastos?',sub:'Selecione as categorias que fazem sentido pra você. Pode adicionar categorias próprias também.'},
+    {label:'Passo 3 de 3',title:'De onde vem sua renda?',sub:'Selecione suas fontes de entrada. Pode personalizar também.'},
+  ];
+  const s=steps[obStep];
+  document.getElementById('ob-step-label').textContent=s.label;
+  document.getElementById('ob-title').textContent=s.title;
+  document.getElementById('ob-sub').textContent=s.sub;
+  document.getElementById('ob-next-btn').textContent=obStep===2?'Criar conta':'Continuar';
+
+  if(obStep===0){
+    document.getElementById('ob-body').innerHTML=`
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px 0;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+          ${EMOJIS.map(e=>`<button onclick="obSetEmoji('${e}')" style="font-size:32px;background:${e===obEmoji?'var(--accent-bg)':'var(--surface2)'};border:2px solid ${e===obEmoji?'var(--accent)':'transparent'};border-radius:50%;width:52px;height:52px;cursor:pointer;transition:all .15s;">${e}</button>`).join('')}
+        </div>
+        <input class="onboard-name-input" id="ob-nome-input" type="text" placeholder="Seu nome..." value="${obNome}" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);padding:12px;outline:none;" oninput="obNome=this.value"/>
+      </div>`;
+  } else if(obStep===1){
+    renderObChips('gasto');
+  } else {
+    renderObChips('entrada');
+  }
+}
+
+function obSetEmoji(e){
+  obEmoji=e;renderObStep();
+}
+
+function renderObChips(modo){
+  const sugestoes=modo==='gasto'?SUGESTOES_GASTO:SUGESTOES_ENTRADA;
+  const selecionadas=modo==='gasto'?obCatsGasto:obCatsEntrada;
+  document.getElementById('ob-body').innerHTML=`
+    <div class="cat-chips" id="ob-chips">
+      ${sugestoes.map(c=>`
+        <div class="cat-chip${selecionadas.includes(c)?' selected':''}" onclick="obToggleCat('${c}','${modo}')">
+          <span class="chip-check">✓</span>${c}
+        </div>`).join('')}
+    </div>
+    <div class="onboard-custom">
+      <input type="text" id="ob-custom-input" placeholder="Adicionar categoria..." style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:14px;padding:9px 12px;outline:none;"/>
+      <button onclick="obAddCustom('${modo}')">+ Add</button>
+    </div>`;
+}
+
+function obToggleCat(cat,modo){
+  if(modo==='gasto'){
+    obCatsGasto=obCatsGasto.includes(cat)?obCatsGasto.filter(c=>c!==cat):[...obCatsGasto,cat];
+  } else {
+    obCatsEntrada=obCatsEntrada.includes(cat)?obCatsEntrada.filter(c=>c!==cat):[...obCatsEntrada,cat];
+  }
+  renderObStep();
+}
+
+function obAddCustom(modo){
+  const inp=document.getElementById('ob-custom-input');
+  const val=inp.value.trim();
+  if(!val)return;
+  if(modo==='gasto'){if(!obCatsGasto.includes(val))obCatsGasto.push(val);}
+  else{if(!obCatsEntrada.includes(val))obCatsEntrada.push(val);}
+  inp.value='';
+  renderObStep();
+}
+
+function obNext(){
+  if(obStep===0){
+    if(!obNome.trim()){toast('⚠ Informe seu nome');return;}
+    obNome=obNome.trim();
+    obStep=1;renderObStep();
+  } else if(obStep===1){
+    if(!obCatsGasto.length){toast('⚠ Selecione ao menos uma categoria de gasto');return;}
+    obStep=2;renderObStep();
+  } else {
+    if(!obCatsEntrada.length){toast('⚠ Selecione ao menos uma categoria de entrada');return;}
+    // criar usuário
+    const novoU={
+      id:'u_'+Date.now(),
+      nome:obNome,
+      emoji:obEmoji,
+      catsGasto:obCatsGasto,
+      catsEntrada:obCatsEntrada,
+      fixed:false
+    };
+    const extra=JSON.parse(localStorage.getItem('cf_usuarios')||'[]');
+    extra.push(novoU);
+    localStorage.setItem('cf_usuarios',JSON.stringify(extra));
+    document.getElementById('onboard-screen').classList.add('hidden');
+    loadUsuario(novoU);
+    toast('✓ Conta criada! Bem-vinda, '+novoU.nome+'!');
+    iniciarApp();
+  }
+}
+
+// ===== INIT =====
+abrirTelaUsuario();
 
 
 // ===== CALENDÁRIO =====
@@ -1043,11 +1305,7 @@ function renderCalGrid(){
 
 function calSelectDay(d){
   calSelected={y:calYear,m:calMonth,d};
-  // Confirma imediatamente ao tocar/clicar no dia
-  const val=pad(calSelected.d)+'/'+pad(calSelected.m+1)+'/'+calSelected.y;
-  document.getElementById(calTargetId).value=val;
-  document.getElementById(calTargetId).dispatchEvent(new Event('input'));
-  fecharCalendario();
+  renderCalGrid();
 }
 
 // close calendar on outside click
@@ -1055,45 +1313,6 @@ document.addEventListener('click',function(e){
   const popup=document.getElementById('cal-popup');
   if(!popup.classList.contains('hidden')&&!popup.contains(e.target)){
     fecharCalendario();
-  }
-});
-
-// ===== PWA INSTALL =====
-// iOS install hint (shows once)
-(function(){
-  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isStandalone=window.navigator.standalone===true;
-  const shown=localStorage.getItem('cf_install_hint');
-  if(isIOS&&!isStandalone&&!shown){
-    const bar=document.createElement('div');
-    bar.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;border-top:1px solid rgba(124,111,247,.4);padding:12px 16px 24px;z-index:500;display:flex;align-items:center;justify-content:space-between;gap:12px;';
-    bar.innerHTML=`<span style="font-size:13px;color:#f0eff8;line-height:1.4;">📲 Instale no seu iPhone: toque em <strong style="color:#a78bfa;">Compartilhar</strong> → <strong style="color:#a78bfa;">Tela de Início</strong></span><button onclick="this.parentElement.remove();localStorage.setItem('cf_install_hint','1')" style="background:none;border:none;color:#9896b8;font-size:20px;cursor:pointer;flex-shrink:0;">✕</button>`;
-    document.body.appendChild(bar);
-  }
-})();
-
-// Android / Chrome install prompt
-let deferredPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{
-  e.preventDefault();
-  deferredPrompt=e;
-  const shown=localStorage.getItem('cf_install_hint');
-  if(!shown){
-    const bar=document.createElement('div');
-    bar.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;border-top:1px solid rgba(124,111,247,.4);padding:12px 16px 20px;z-index:500;display:flex;align-items:center;justify-content:space-between;gap:12px;';
-    bar.innerHTML=`<span style="font-size:13px;color:#f0eff8;">📲 Instale o app no seu celular para acesso rápido!</span><div style="display:flex;gap:8px;flex-shrink:0;"><button id="btn-install-yes" style="background:#7c6ff7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">Instalar</button><button id="btn-install-no" style="background:none;border:1px solid rgba(255,255,255,.2);color:#9896b8;border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;">Depois</button></div>`;
-    document.body.appendChild(bar);
-    document.getElementById('btn-install-yes').onclick=async()=>{
-      bar.remove();
-      deferredPrompt.prompt();
-      const{outcome}=await deferredPrompt.userChoice;
-      if(outcome==='accepted')localStorage.setItem('cf_install_hint','1');
-      deferredPrompt=null;
-    };
-    document.getElementById('btn-install-no').onclick=()=>{
-      bar.remove();
-      localStorage.setItem('cf_install_hint','1');
-    };
   }
 });
 </script>
