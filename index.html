@@ -920,10 +920,11 @@ function renderAnalise(){
   );
   const totalG=gastosQueContam.reduce((s,x)=>s+x.valor,0);
   const totalE=itens.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+x.valor,0);
-  const saldo=totalE-totalG;
-  const pct=totalE>0?Math.min(100,Math.round(totalG/totalE*100)):0;
   const parMes=getParcelasMes(mes);
   const totalPar=parMes.reduce((s,p)=>s+p.valorParcela,0);
+  const totalGcomPar=totalG+totalPar;
+  const saldo=totalE-totalGcomPar;
+  const pct=totalE>0?Math.min(100,Math.round(totalGcomPar/totalE*100)):0;
   const gastosCat={};gastosQueContam.forEach(x=>{gastosCat[x.cat]=(gastosCat[x.cat]||0)+x.valor;});
   const sortedG=Object.entries(gastosCat).sort((a,b)=>b[1]-a[1]);
   const maxG=sortedG[0]?.[1]||1;
@@ -939,7 +940,7 @@ function renderAnalise(){
     </div>
     <div class="metric-grid">
       <div class="metric"><div class="metric-label">Entradas</div><div class="metric-value green">${fmt(totalE)}</div></div>
-      <div class="metric"><div class="metric-label">Gastos</div><div class="metric-value red">${fmt(totalG)}</div></div>
+      <div class="metric"><div class="metric-label">Gastos</div><div class="metric-value red">${fmt(totalGcomPar)}</div></div>
       <div class="metric"><div class="metric-label">Comprometido</div><div class="metric-value ${pct>85?'red':pct>65?'amber':'green'}">${pct}%</div></div>
       <div class="metric"><div class="metric-label">Parcelas</div><div class="metric-value amber">${fmt(totalPar)}</div></div>
     </div>
@@ -947,12 +948,12 @@ function renderAnalise(){
       <div class="card-title">Uso das entradas</div>
       <div class="progress-wrap">
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);">
-          <span>Gastos: ${fmt(totalG)}</span><span>Total: ${fmt(totalE)}</span>
+          <span>Gastos: ${fmt(totalGcomPar)}</span><span>Total: ${fmt(totalE)}</span>
         </div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${barC};"></div></div>
         <div style="font-size:12px;color:var(--text3);">${saldo>=0?'Sobram '+fmt(saldo)+' disponíveis':'Gastos excedem entradas em '+fmt(Math.abs(saldo))}</div>
       </div>
-      ${totalPar>0?`<div class="divider"></div><div style="font-size:12px;color:var(--text3);">Parcelas neste mês (não lançadas): <span style="color:var(--amber);font-family:var(--mono);">${fmt(totalPar)}</span></div>`:''}
+      ${totalPar>0?`<div class="divider"></div><div style="font-size:12px;color:var(--text3);">↳ inclui ${fmt(totalPar)} de parcelas neste mês</div>`:''} 
     </div>
     <div class="card">
       <div class="card-title">Gastos por categoria</div>
@@ -1101,8 +1102,9 @@ function renderComparativo(){
   const rows=meses.map(m=>{
     const it=dados.filter(x=>getMesEfetivo(x)===m);
     const g=dados.filter(x=>x.tipo==='gasto'&&((!x.dataPgto&&getMesEfetivo(x)===m)||(x.dataPgto&&mesKey(x.dataPgto)===m))).reduce((s,x)=>s+x.valor,0);
+    const par=getParcelasMes(m).reduce((s,p)=>s+p.valorParcela,0);
     const e=it.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+x.valor,0);
-    return{m,g,e,saldo:e-g};
+    return{m,g:g+par,gBase:g,par,e,saldo:e-g-par};
   });
   const maxV=Math.max(1,...rows.map(r=>Math.max(r.g,r.e)));
   const comDados=rows.filter(r=>r.e>0||r.g>0);
