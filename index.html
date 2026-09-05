@@ -22,7 +22,62 @@
   --radius:14px;--radius-sm:8px;
   --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+/* ===== TEMAS ===== */
+[data-theme="rose"]{
+  --bg:#fadadd;--surface:#fff0f3;--surface2:#fce4ec;--surface3:#f8bbd0;
+  --border:rgba(173,30,80,0.12);--border2:rgba(173,30,80,0.22);
+  --text:#2d1b20;--text2:#7a4055;--text3:#b07090;
+  --accent:#c2185b;--accent2:#d81b60;--accent-bg:rgba(194,24,91,0.12);
+  --green:#2e7d32;--green-bg:rgba(46,125,50,0.12);
+  --red:#c62828;--red-bg:rgba(198,40,40,0.1);
+  --amber:#e65100;--amber-bg:rgba(230,81,0,0.1);
+  --blue:#1565c0;--blue-bg:rgba(21,101,192,0.1);
+}
+[data-theme="light"]{
+  --bg:#f5f5f7;--surface:#ffffff;--surface2:#eeeeee;--surface3:#e0e0e0;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);
+  --text:#1a1a2e;--text2:#4a4a6a;--text3:#8a8aaa;
+  --accent:#4f46e5;--accent2:#6366f1;--accent-bg:rgba(79,70,229,0.12);
+  --green:#16a34a;--green-bg:rgba(22,163,74,0.12);
+  --red:#dc2626;--red-bg:rgba(220,38,38,0.1);
+  --amber:#d97706;--amber-bg:rgba(217,119,6,0.1);
+  --blue:#2563eb;--blue-bg:rgba(37,99,235,0.1);
+}
+[data-theme="blue"]{
+  --bg:#0a0f1e;--surface:#111827;--surface2:#1e2a3a;--surface3:#263548;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.2);
+  --text:#e8f0fe;--text2:#93afd4;--text3:#4f6d8f;
+  --accent:#3b82f6;--accent2:#60a5fa;--accent-bg:rgba(59,130,246,0.15);
+  --green:#34d399;--green-bg:rgba(52,211,153,0.12);
+  --red:#f87171;--red-bg:rgba(248,113,113,0.12);
+  --amber:#fbbf24;--amber-bg:rgba(251,191,36,0.12);
+  --blue:#60a5fa;--blue-bg:rgba(96,165,250,0.12);
+}
+[data-theme="ocean"]{
+  --bg:#071520;--surface:#0d2137;--surface2:#0f2d4a;--surface3:#143a5e;
+  --border:rgba(6,182,212,0.1);--border2:rgba(6,182,212,0.2);
+  --text:#e0f7fa;--text2:#80cbc4;--text3:#4a8f8a;
+  --accent:#06b6d4;--accent2:#22d3ee;--accent-bg:rgba(6,182,212,0.15);
+  --green:#4ade80;--green-bg:rgba(74,222,128,0.12);
+  --red:#f87171;--red-bg:rgba(248,113,113,0.12);
+  --amber:#fbbf24;--amber-bg:rgba(251,191,36,0.12);
+  --blue:#38bdf8;--blue-bg:rgba(56,189,248,0.12);
+}
+[data-theme="rose"] .btn-green{background:var(--accent);color:#fff;}
+[data-theme="rose"] .btn-red{background:var(--accent);color:#fff;}
+[data-theme="rose"] .btn-accent{background:var(--accent);color:#fff;}
+[data-theme="light"] .btn-green{background:var(--accent);color:#fff;}
+[data-theme="light"] .btn-red{background:var(--accent);color:#fff;}
+
+/* STATUS PAGO */
+.pago-btn{background:none;border:none;cursor:pointer;padding:4px;border-radius:50%;display:flex;align-items:center;color:var(--text3);transition:color .15s;}
+.pago-btn:active{background:var(--green-bg);}
+.pago-btn.pago{color:var(--green);}
+/* TEMA CHIPS */
+.tema-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.tema-chip{display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:99px;border:2px solid var(--border2);background:var(--surface2);cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;}
+.tema-chip.active{border-color:var(--accent);color:var(--accent2);background:var(--accent-bg);}
+.tema-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;}
 .app{display:flex;flex-direction:column;height:100dvh;max-width:480px;margin:0 auto;}
 /* TOPBAR */
@@ -44,7 +99,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 /* SECTION */
 .section{display:none;}.section.active{display:block;}
 /* CARDS */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;box-sizing:border-box;}
 .card-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
 /* TOGGLE */
 .type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;}
@@ -54,7 +109,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 /* FORM */
 .form-group{margin-bottom:12px;}
 label{display:block;font-size:11px;color:var(--text3);margin-bottom:5px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;}
-input,select{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:15px;padding:10px 12px;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none;}
+input,select{width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:15px;padding:10px 12px;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none;}
+input[type=number]{-moz-appearance:textfield;}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 input:focus,select:focus{border-color:var(--accent);}
 input::placeholder{color:var(--text3);}
 input[type=number]{font-family:var(--mono);font-size:20px;font-weight:500;padding:12px;}
@@ -142,9 +200,14 @@ select option{background:var(--surface2);}
 .pagamento-pendente{background:rgba(251,191,36,.07);border-left:3px solid var(--amber);}
 .pagamento-vencido{background:rgba(248,113,113,.07);border-left:3px solid var(--red);}
 /* TOGGLE DIFERIDO */
-.dif-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;user-select:none;}
-.dif-toggle input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
-.dif-toggle-label{font-size:13px;color:var(--text2);}
+.dif-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;user-select:none;width:100%;}
+.dif-toggle input[type=checkbox]{display:none;}
+.dif-toggle-switch{width:38px;height:22px;background:var(--surface3);border-radius:99px;flex-shrink:0;position:relative;transition:background .2s;border:1px solid var(--border2);}
+.dif-toggle-switch::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.dif-toggle input:checked~.dif-toggle-switch{background:var(--accent);border-color:var(--accent);}
+.dif-toggle input:checked~.dif-toggle-switch::after{transform:translateX(16px);}
+.dif-toggle-label{font-size:13px;color:var(--text2);transition:color .2s;flex:1;}
+.dif-toggle input:checked~.dif-toggle-label{color:var(--text);}
 scrollbar-width:none;
 ::-webkit-scrollbar{display:none;}
 
@@ -182,6 +245,22 @@ scrollbar-width:none;
 .onboard-custom button{flex-shrink:0;padding:9px 14px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;}
 .onboard-footer{padding:16px 24px calc(16px + env(safe-area-inset-bottom));flex-shrink:0;border-top:1px solid var(--border);}
 .onboard-name-input{font-size:20px;font-weight:500;text-align:center;margin-bottom:4px;}
+
+/* SYNC */
+.sync-indicator{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s;}
+.sync-dot.ok{background:var(--green);}
+.sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite;}
+.sync-dot.err{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* MODAL SYNC */
+.sync-code-box{background:var(--surface3);border-radius:var(--radius-sm);padding:18px;text-align:center;margin:16px 0;}
+.sync-code{font-family:var(--mono);font-size:28px;font-weight:600;color:var(--accent2);letter-spacing:4px;}
+.sync-code-label{font-size:11px;color:var(--text3);margin-top:6px;text-transform:uppercase;letter-spacing:.06em;}
+.sync-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:20px;}
+.sync-tab{padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;}
+.sync-tab.active{background:var(--accent-bg);color:var(--accent2);border-color:var(--accent);}
 
 /* CALENDAR PICKER */
 .date-input-wrap{position:relative;display:flex;align-items:center;}
@@ -226,6 +305,18 @@ scrollbar-width:none;
   <div class="onboard-body" id="ob-body"></div>
   <div class="onboard-footer">
     <button class="btn btn-accent" id="ob-next-btn" onclick="obNext()">Continuar</button>
+  </div>
+</div>
+
+<!-- MODAL SYNC -->
+<div class="modal-overlay hidden" id="modal-sync">
+  <div class="modal" style="position:relative;">
+    <button class="icon-btn modal-close" onclick="fecharModal('modal-sync')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="modal-title">☁️ Sincronização</div>
+    <div class="modal-sub" id="sync-modal-sub">Seus dados ficam salvos na nuvem e sincronizam entre dispositivos.</div>
+    <div id="sync-modal-body"></div>
   </div>
 </div>
 
@@ -278,6 +369,10 @@ scrollbar-width:none;
       <div class="topbar-sub" id="topbar-sub">Registrar gastos e entradas</div>
     </div>
     <div class="topbar-right">
+      <div class="sync-indicator" id="sync-indicator" onclick="abrirModalSync()" style="cursor:pointer;display:none;">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-label">Sync</span>
+      </div>
       <button class="icon-btn" onclick="abrirModal('modal-backup')" title="Backup">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg>
       </button>
@@ -324,6 +419,7 @@ scrollbar-width:none;
         <div id="bloco-diferido">
           <label class="dif-toggle">
             <input type="checkbox" id="chk-diferido" onchange="toggleDiferido()"/>
+            <div class="dif-toggle-switch"></div>
             <span class="dif-toggle-label">Pagar em data diferente (prazo, Uber, boleto...)</span>
           </label>
           <div id="campo-pagamento" style="display:none;">
@@ -340,6 +436,19 @@ scrollbar-width:none;
               📌 Aparece no <strong>Histórico</strong> na data real, mas entra no <strong>saldo</strong> apenas na data de pagamento.
             </div>
           </div>
+        </div>
+        <!-- CLUSTER -->
+        <label class="dif-toggle" style="margin-bottom:8px;">
+          <input type="checkbox" id="chk-cluster" onchange="toggleCluster()"/>
+          <div class="dif-toggle-switch"></div>
+          <span class="dif-toggle-label">Contar em outro mês</span>
+        </label>
+        <div id="campo-cluster" style="display:none;margin-bottom:12px;">
+          <div class="form-group">
+            <label>Mês de referência</label>
+            <input type="text" id="inp-cluster" maxlength="7" placeholder="mm/aaaa" inputmode="numeric"/>
+          </div>
+          <div class="diferido-hint show">📂 Este gasto será contabilizado no mês informado.</div>
         </div>
         <button class="btn btn-red" id="btn-lancar" onclick="lancar()">Registrar gasto</button>
       </div>
@@ -405,6 +514,23 @@ scrollbar-width:none;
 
     <!-- ABA 6: CONFIGURAÇÕES -->
     <div class="section" id="sec-config">
+      <div class="card">
+        <div class="card-title">Aparência</div>
+        <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:10px;">
+          <div class="settings-label">Tema do app</div>
+          <div class="tema-chips" id="tema-chips"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Sincronização entre dispositivos</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Código de sync</div>
+            <div class="settings-sub" id="cfg-sync-status">Não configurado</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="abrirModalSync()">Configurar</button>
+        </div>
+      </div>
       <div class="card">
         <div class="card-title">Backup e segurança</div>
         <div class="settings-row">
@@ -564,10 +690,11 @@ function fmtS(v){return'R$\u00a0'+Number(v).toLocaleString('pt-BR',{minimumFract
 function todayStr(){const d=new Date();return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();}
 function pad(n){return String(n).padStart(2,'0');}
 function mesKey(s){const[d,m,a]=s.split('/');return a+'-'+m;}
+function getMesEfetivo(x){return x.cluster||mesKey(x.data);}
 function mesLabel(k){const[a,m]=k.split('-');return MESES[parseInt(m)]+'/'+a;}
 function curMes(){return mesKey(todayStr());}
 function getMeses(){
-  const keys=[...new Set(dados.map(x=>mesKey(x.data)))].sort().reverse();
+  const keys=[...new Set(dados.map(x=>getMesEfetivo(x)))].sort().reverse();
   const c=curMes();if(!keys.includes(c))keys.unshift(c);return keys;
 }
 function populateMes(){
@@ -658,9 +785,16 @@ function toggleDiferido(){
   const on=document.getElementById('chk-diferido').checked;
   document.getElementById('campo-pagamento').style.display=on?'block':'none';
   if(on){
-    // sugerir 70 dias como padrão
     const d=new Date();d.setDate(d.getDate()+70);
     document.getElementById('inp-pgto').value=pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+  }
+}
+
+function toggleCluster(){
+  const on=document.getElementById('chk-cluster').checked;
+  document.getElementById('campo-cluster').style.display=on?'block':'none';
+  if(on&&!document.getElementById('inp-cluster').value){
+    document.getElementById('inp-cluster').value=pad(new Date().getMonth()+1)+'/'+new Date().getFullYear();
   }
 }
 
@@ -680,12 +814,25 @@ function lancar(){
     const dG=strToDate(data),dP=strToDate(dataPgto);
     if(dP<=dG){toast('⚠ Data de pagamento deve ser depois do gasto');return;}
   }
-  dados.push({id:Date.now(),tipo,valor,desc,cat,data,dataPgto});
+  // cluster
+  let cluster=null;
+  if(document.getElementById('chk-cluster').checked){
+    const cv=document.getElementById('inp-cluster').value.trim();
+    if(cv&&/^\d{2}\/\d{4}$/.test(cv)){
+      const[cm,ca]=cv.split('/');cluster=ca+'-'+pad(parseInt(cm));
+    }
+  }
+  // pago: gastos sem diferido são pagos na hora; diferidos começam como não pagos
+  const pago=tipo==='entrada'?true:!dataPgto;
+  dados.push({id:Date.now(),tipo,valor,desc,cat,data,dataPgto,cluster,pago});
   save();
   document.getElementById('inp-valor').value='';
   document.getElementById('inp-desc').value='';
   document.getElementById('chk-diferido').checked=false;
   document.getElementById('campo-pagamento').style.display='none';
+  document.getElementById('chk-cluster').checked=false;
+  document.getElementById('campo-cluster').style.display='none';
+  document.getElementById('inp-cluster').value='';
   populateMes();renderResumoDia();
   toast(tipo==='gasto'?(dataPgto?'✓ Gasto registrado (pagamento em '+dataPgto+')':'✓ Gasto registrado!'):'✓ Entrada registrada!');
 }
@@ -711,27 +858,48 @@ function renderResumoDia(){
 }
 
 // ===== HISTÓRICO =====
+function marcarPago(id){
+  const item=dados.find(x=>x.id===id);
+  if(!item)return;
+  item.pago=!item.pago;
+  save();
+  renderHistorico();
+  renderAnalise();
+  toast(item.pago?'✓ Marcado como pago':'Desmarcado');
+}
+
 function renderHistorico(){
   const mes=document.getElementById('sel-mes-hist').value;
-  const itens=dados.filter(x=>mesKey(x.data)===mes).sort((a,b)=>{
+  const itens=dados.filter(x=>getMesEfetivo(x)===mes).sort((a,b)=>{
     const d=s=>{const[dd,mm,aa]=s.split('/');return new Date(aa,mm-1,dd);};
     return d(b.data)-d(a.data);
   });
   const card=document.getElementById('hist-card');
   if(!itens.length){card.innerHTML='<div class="empty">Nenhum lançamento neste mês.</div>';return;}
-  card.innerHTML=itens.map(x=>`
-    <div class="item-row">
-      <div>
+  card.innerHTML=itens.map(x=>{
+    const isPago=x.pago!==false; // default true para itens antigos
+    const pagoIcon=x.tipo==='gasto'?`
+      <button class="pago-btn ${isPago?'pago':''}" onclick="marcarPago(${x.id})" title="${isPago?'Pago — clique para desmarcar':'Marcar como pago'}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="${isPago?'currentColor':'none'}" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>${isPago?'<polyline points="9 12 11 14 15 10"/>':''}
+        </svg>
+      </button>`:'';
+    const statusBadge=x.tipo==='gasto'&&x.dataPgto?`<span class="badge ${isPago?'badge-green':'badge-amber'}">${isPago?'Pago':'A pagar'}</span>&nbsp;`:'';
+    const clusterBadge=x.cluster&&x.cluster!==mesKey(x.data)?`<span class="badge badge-blue">📂 ${mesLabel(x.cluster)}</span>&nbsp;`:'';
+    return`<div class="item-row ${!isPago&&x.tipo==='gasto'?'pagamento-pendente':''}">
+      <div style="flex:1;min-width:0;">
         <div class="item-name">${x.desc||x.cat}</div>
-        <div class="item-sub"><span class="badge ${x.tipo==='gasto'?'badge-red':'badge-green'}">${x.cat}</span>&nbsp;&nbsp;${x.data}</div>
+        <div class="item-sub">${statusBadge}${clusterBadge}<span class="badge ${x.tipo==='gasto'?'badge-red':'badge-green'}">${x.cat}</span>&nbsp;&nbsp;${x.data}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:4px;">
         <span class="${x.tipo==='gasto'?'val-red':'val-green'}">${x.tipo==='gasto'?'-':'+'}${fmt(x.valor)}</span>
+        ${pagoIcon}
         <button class="del-btn" onclick="deletar(${x.id})">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
         </button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function deletar(id){
@@ -743,14 +911,20 @@ function deletar(id){
 // ===== ANÁLISE =====
 function renderAnalise(){
   const mes=document.getElementById('sel-mes-analise').value;
-  const itens=dados.filter(x=>mesKey(x.data)===mes);
-  const totalG=itens.filter(x=>x.tipo==='gasto').reduce((s,x)=>s+x.valor,0);
+  const itens=dados.filter(x=>getMesEfetivo(x)===mes);
+  const gastosQueContam=dados.filter(x=>
+    x.tipo==='gasto'&&(
+      (!x.dataPgto&&getMesEfetivo(x)===mes)||
+      (x.dataPgto&&mesKey(x.dataPgto)===mes)
+    )
+  );
+  const totalG=gastosQueContam.reduce((s,x)=>s+x.valor,0);
   const totalE=itens.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+x.valor,0);
   const saldo=totalE-totalG;
   const pct=totalE>0?Math.min(100,Math.round(totalG/totalE*100)):0;
   const parMes=getParcelasMes(mes);
   const totalPar=parMes.reduce((s,p)=>s+p.valorParcela,0);
-  const gastosCat={};itens.filter(x=>x.tipo==='gasto').forEach(x=>{gastosCat[x.cat]=(gastosCat[x.cat]||0)+x.valor;});
+  const gastosCat={};gastosQueContam.forEach(x=>{gastosCat[x.cat]=(gastosCat[x.cat]||0)+x.valor;});
   const sortedG=Object.entries(gastosCat).sort((a,b)=>b[1]-a[1]);
   const maxG=sortedG[0]?.[1]||1;
   const entCat={};itens.filter(x=>x.tipo==='entrada').forEach(x=>{entCat[x.cat]=(entCat[x.cat]||0)+x.valor;});
@@ -925,8 +1099,8 @@ function renderComparativo(){
   const meses=getMeses().slice(0,12).reverse();
   if(meses.length<1){document.getElementById('comp-content').innerHTML='<div class="card"><div class="empty">Faça lançamentos para ver o comparativo.</div></div>';return;}
   const rows=meses.map(m=>{
-    const it=dados.filter(x=>mesKey(x.data)===m);
-    const g=it.filter(x=>x.tipo==='gasto').reduce((s,x)=>s+x.valor,0);
+    const it=dados.filter(x=>getMesEfetivo(x)===m);
+    const g=dados.filter(x=>x.tipo==='gasto'&&((!x.dataPgto&&getMesEfetivo(x)===m)||(x.dataPgto&&mesKey(x.dataPgto)===m))).reduce((s,x)=>s+x.valor,0);
     const e=it.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+x.valor,0);
     return{m,g,e,saldo:e-g};
   });
@@ -987,7 +1161,9 @@ function renderComparativo(){
 
 // ===== CONFIG =====
 function renderConfig(){
-  document.getElementById('cfg-usuario-nome').textContent=(usuarioAtual?.emoji||'')+' '+( usuarioAtual?.nome||'—');
+  document.getElementById('cfg-usuario-nome').textContent=(usuarioAtual?.emoji||'')+' '+(usuarioAtual?.nome||'—');
+  atualizarCfgSyncStatus();
+  renderTemaChips();
   document.getElementById('cfg-total-lanc').textContent=dados.length+' registros';
   document.getElementById('cfg-total-parc').textContent=parcelas.length+' itens';
   const meses=getMeses().filter(m=>dados.some(x=>mesKey(x.data)===m));
@@ -1026,6 +1202,35 @@ function switchTab(name){
   if(name==='config')renderConfig();
 }
 
+// ===== TEMAS =====
+const TEMAS=[
+  {id:'dark',nome:'🌙 Escuro',dot:'#7c6ff7'},
+  {id:'rose',nome:'🌸 Rosa',dot:'#e91e63'},
+  {id:'light',nome:'☀️ Claro',dot:'#4f46e5'},
+  {id:'blue',nome:'💙 Azul',dot:'#3b82f6'},
+  {id:'ocean',nome:'🌊 Oceano',dot:'#06b6d4'},
+];
+
+function aplicarTema(id){
+  document.documentElement.setAttribute('data-theme',id==='dark'?'':id);
+  localStorage.setItem('cf_tema',id);
+  // atualizar theme-color meta
+  const cores={dark:'#0f0f17',rose:'#fff0f3',light:'#f5f5f7',blue:'#0a0f1e',ocean:'#071520'};
+  document.querySelector('meta[name=theme-color]').content=cores[id]||'#0f0f17';
+  renderTemaChips();
+}
+
+function renderTemaChips(){
+  const el=document.getElementById('tema-chips');
+  if(!el)return;
+  const atual=localStorage.getItem('cf_tema')||'dark';
+  el.innerHTML=TEMAS.map(t=>`
+    <div class="tema-chip ${t.id===atual?'active':''}" onclick="aplicarTema('${t.id}')">
+      <div class="tema-dot" style="background:${t.dot};"></div>
+      ${t.nome}
+    </div>`).join('');
+}
+
 // ===== MASKS =====
 function maskDate(e){
   let v=e.target.value.replace(/\D/g,'');
@@ -1041,6 +1246,10 @@ function maskMonthYear(e){
 document.getElementById('inp-data').addEventListener('input',maskDate);
 document.getElementById('inp-pgto').addEventListener('input',maskDate);
 document.getElementById('p-inicio').addEventListener('input',maskMonthYear);
+document.getElementById('inp-cluster').addEventListener('input',maskMonthYear);
+
+// aplicar tema salvo imediatamente
+(function(){const t=localStorage.getItem('cf_tema')||'dark';aplicarTema(t);})();
 
 // ===== SELEÇÃO DE USUÁRIO =====
 function abrirTelaUsuario(){
@@ -1079,9 +1288,9 @@ function renderUserCards(){
 function selecionarUsuario(uid){
   const u=getUsuarios().find(x=>x.id===uid);
   if(!u)return;
+  pararSyncTimer();
   loadUsuario(u);
   fecharTelaUsuario();
-  // atualiza topbar com nome do usuário
   document.getElementById('topbar-sub').textContent='Olá, '+u.nome+'!';
   iniciarApp();
 }
@@ -1092,6 +1301,13 @@ function iniciarApp(){
   document.getElementById('p-inicio').value=pad(new Date().getMonth()+1)+'/'+new Date().getFullYear();
   populateMes();renderResumoDia();renderParcelas();
   switchTab('lancar');
+  // iniciar sync se já configurado
+  if(getSyncBinId()){
+    iniciarSyncTimer();
+    syncPull(); // pull imediato ao abrir
+  } else {
+    document.getElementById('sync-indicator').style.display='none';
+  }
 }
 
 // Botão de troca de usuário na topbar
@@ -1217,6 +1433,237 @@ function obNext(){
 // ===== INIT =====
 abrirTelaUsuario();
 
+
+// ===== SYNC JSONBIN =====
+const JBIN_KEY='$2a$10$.ya5i34WmVOJrzUud.T/Hu5T2LcHspJ4cw7O9U32zGnDzEM.6WJo2';
+const JBIN_URL='https://api.jsonbin.io/v3/b';
+let syncTimer=null;
+let lastSyncHash='';
+
+function syncStorageKey(uid){return`cf_sync_bin_${uid}`;}
+function getSyncBinId(){return localStorage.getItem(syncStorageKey(usuarioAtual.id))||null;}
+function setSyncBinId(id){localStorage.setItem(syncStorageKey(usuarioAtual.id),id);}
+
+function dataHash(){return JSON.stringify({dados,parcelas});}
+
+function setSyncIndicator(state,label){
+  const dot=document.getElementById('sync-dot');
+  const lbl=document.getElementById('sync-label');
+  const ind=document.getElementById('sync-indicator');
+  if(!dot)return;
+  ind.style.display='flex';
+  dot.className='sync-dot '+(state==='ok'?'ok':state==='syncing'?'syncing':'err');
+  lbl.textContent=label||'Sync';
+}
+
+async function syncPush(){
+  const binId=getSyncBinId();
+  if(!binId)return;
+  const hash=dataHash();
+  if(hash===lastSyncHash)return; // nada mudou
+  setSyncIndicator('syncing','Salvando...');
+  try{
+    const payload={dados,parcelas,usuario:{id:usuarioAtual.id,nome:usuarioAtual.nome,emoji:usuarioAtual.emoji,catsGasto:usuarioAtual.catsGasto,catsEntrada:usuarioAtual.catsEntrada},ts:Date.now()};
+    await fetch(`${JBIN_URL}/${binId}`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY},
+      body:JSON.stringify(payload)
+    });
+    lastSyncHash=hash;
+    setSyncIndicator('ok','Salvo ✓');
+    atualizarCfgSyncStatus();
+  }catch{setSyncIndicator('err','Erro sync');}
+}
+
+async function syncPull(){
+  const binId=getSyncBinId();
+  if(!binId)return false;
+  setSyncIndicator('syncing','Sincronizando...');
+  try{
+    const res=await fetch(`${JBIN_URL}/${binId}/latest`,{
+      headers:{'X-Master-Key':JBIN_KEY,'X-Bin-Meta':false}
+    });
+    if(!res.ok){setSyncIndicator('err','Erro sync');return false;}
+    const remote=await res.json();
+    // só atualiza se dados remotos são mais recentes
+    const localHash=dataHash();
+    const remoteHash=JSON.stringify({dados:remote.dados,parcelas:remote.parcelas});
+    if(remoteHash!==localHash){
+      dados=remote.dados||[];
+      parcelas=remote.parcelas||[];
+      save();
+      lastSyncHash=remoteHash;
+      // re-render aba atual
+      populateMes();renderResumoDia();renderParcelas();
+      setSyncIndicator('ok','Atualizado ✓');
+      return true;
+    }
+    lastSyncHash=localHash;
+    setSyncIndicator('ok','Atualizado ✓');
+    return false;
+  }catch{setSyncIndicator('err','Erro sync');return false;}
+}
+
+async function criarBin(){
+  const payload={dados,parcelas,usuario:{id:usuarioAtual.id,nome:usuarioAtual.nome,emoji:usuarioAtual.emoji,catsGasto:usuarioAtual.catsGasto,catsEntrada:usuarioAtual.catsEntrada},ts:Date.now()};
+  const res=await fetch(JBIN_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY,'X-Bin-Private':'true','X-Bin-Name':usuarioAtual.nome},
+    body:JSON.stringify(payload)
+  });
+  const data=await res.json();
+  console.log('JSONBin create response:',JSON.stringify(data));
+  if(!res.ok) throw new Error('HTTP '+res.status+': '+JSON.stringify(data));
+  return data.metadata?.id||null;
+}
+
+async function entrarComCodigo(codigo){
+  // codigo = binId direto
+  const binId=codigo.trim();
+  setSyncIndicator('syncing','Verificando...');
+  try{
+    const res=await fetch(`${JBIN_URL}/${binId}/latest`,{
+      headers:{'X-Master-Key':JBIN_KEY,'X-Bin-Meta':false}
+    });
+    if(!res.ok)throw new Error('not found');
+    const remote=await res.json();
+    if(!remote.dados)throw new Error('invalid');
+    setSyncBinId(binId);
+    dados=remote.dados||[];
+    parcelas=remote.parcelas||[];
+    // restaurar categorias do usuário remoto se existir
+    if(remote.usuario&&usuarioAtual.id!=='sergio'){
+      usuarioAtual.catsGasto=remote.usuario.catsGasto||usuarioAtual.catsGasto;
+      usuarioAtual.catsEntrada=remote.usuario.catsEntrada||usuarioAtual.catsEntrada;
+    }
+    save();
+    lastSyncHash=dataHash();
+    iniciarSyncTimer();
+    setSyncIndicator('ok','Conectado ✓');
+    atualizarCfgSyncStatus();
+    populateMes();renderResumoDia();renderParcelas();
+    return true;
+  }catch{
+    setSyncIndicator('err','Código inválido');
+    return false;
+  }
+}
+
+function iniciarSyncTimer(){
+  if(syncTimer)clearInterval(syncTimer);
+  if(!getSyncBinId())return;
+  // pull a cada 60s quando tem bin configurado
+  syncTimer=setInterval(()=>syncPull(),60000);
+}
+
+function pararSyncTimer(){
+  if(syncTimer){clearInterval(syncTimer);syncTimer=null;}
+}
+
+function atualizarCfgSyncStatus(){
+  const el=document.getElementById('cfg-sync-status');
+  if(!el)return;
+  const binId=getSyncBinId();
+  el.textContent=binId?'Ativo — código: '+binId.slice(-6).toUpperCase():'Não configurado';
+}
+
+// hook: após cada save(), fazer push automático
+const _saveOriginal=save;
+function save(){
+  localStorage.setItem(storageKey(usuarioAtual.id,'dados'),JSON.stringify(dados));
+  localStorage.setItem(storageKey(usuarioAtual.id,'parcelas'),JSON.stringify(parcelas));
+  // push assíncrono sem bloquear
+  if(getSyncBinId())setTimeout(syncPush,300);
+}
+
+// ===== MODAL SYNC =====
+function abrirModalSync(){
+  renderSyncModal();
+  abrirModal('modal-sync');
+}
+
+function renderSyncModal(tab='novo'){
+  const binId=getSyncBinId();
+  const temSync=!!binId;
+
+  if(temSync){
+    document.getElementById('sync-modal-body').innerHTML=`
+      <div class="sync-code-box">
+        <div style="font-family:var(--mono);font-size:13px;color:var(--accent2);word-break:break-all;letter-spacing:1px;">${binId}</div>
+        <div class="sync-code-label" style="margin-top:8px;">Seu código de sync</div>
+      </div>
+      <button class="btn btn-outline" style="margin-bottom:10px;" onclick="navigator.clipboard.writeText('${binId}').then(()=>toast('✓ Código copiado!'))">📋 Copiar código</button>
+      <div style="font-size:12px;color:var(--text3);line-height:1.6;margin-bottom:16px;">
+        📱 Em outro dispositivo: abra o app → mesmo usuário → <strong style="color:var(--text2);">Config → Sincronização → Configurar → Tenho um código</strong> → cole o código acima.
+      </div>
+      <button class="btn btn-outline" onclick="syncPull().then(r=>toast(r?'✓ Dados atualizados!':'✓ Já está atualizado'))">🔄 Sincronizar agora</button>
+      <div style="margin-top:10px;">
+        <button class="btn btn-outline" style="color:var(--red);border-color:rgba(248,113,113,.3);" onclick="desconectarSync()">Desconectar sync</button>
+      </div>`;
+  } else {
+    document.getElementById('sync-modal-body').innerHTML=`
+      <div class="sync-tabs">
+        <button class="sync-tab ${tab==='novo'?'active':''}" onclick="renderSyncModal('novo')">Criar novo</button>
+        <button class="sync-tab ${tab==='entrar'?'active':''}" onclick="renderSyncModal('entrar')">Tenho um código</button>
+      </div>
+      ${tab==='novo'?`
+        <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px;">
+          Cria um código único para este usuário. Use esse código para conectar outros dispositivos.
+        </div>
+        <button class="btn btn-accent" onclick="ativarSyncNovo()">☁️ Criar e conectar à nuvem</button>
+      `:`
+        <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px;">
+          Cole o código do outro dispositivo (Config → Sincronização → Copiar código).
+        </div>
+        <div class="form-group">
+          <input type="text" id="inp-sync-code" placeholder="Cole o código aqui..." style="font-size:12px;font-family:var(--mono);word-break:break-all;"/>
+        </div>
+        <button class="btn btn-accent" onclick="ativarSyncCodigo()">Conectar</button>
+      `}`;
+  }
+}
+
+async function ativarSyncNovo(){
+  const btn=document.querySelector('#sync-modal-body .btn-accent');
+  if(btn){btn.disabled=true;btn.textContent='Criando...';}
+  try{
+    const binId=await criarBin();
+    if(!binId)throw new Error();
+    setSyncBinId(binId);
+    lastSyncHash=dataHash();
+    iniciarSyncTimer();
+    setSyncIndicator('ok','Conectado ✓');
+    atualizarCfgSyncStatus();
+    renderSyncModal();
+    toast('✓ Sync ativado! Código: '+binId.slice(-6).toUpperCase());
+  }catch(e){
+    console.error('Sync create error:',e);
+    toast('⚠ Erro: '+e.message);
+    if(btn){btn.disabled=false;btn.textContent='☁️ Criar e conectar à nuvem';}
+  }
+}
+
+async function ativarSyncCodigo(){
+  const inp=document.getElementById('inp-sync-code');
+  const binId=(inp?.value||'').trim();
+  if(!binId){toast('⚠ Cole o código');return;}
+  const btn=document.querySelector('#sync-modal-body .btn-accent');
+  if(btn){btn.disabled=true;btn.textContent='Verificando...';}
+  const ok=await entrarComCodigo(binId);
+  if(ok){renderSyncModal();toast('✓ Sincronizado com sucesso!');}
+  else{toast('⚠ Código inválido ou sem conexão');if(btn){btn.disabled=false;btn.textContent='Conectar';}}
+}
+
+function desconectarSync(){
+  if(!confirm('Desconectar sync? Os dados locais são mantidos.'))return;
+  localStorage.removeItem(syncStorageKey(usuarioAtual.id));
+  pararSyncTimer();
+  setSyncIndicator('','');
+  document.getElementById('sync-indicator').style.display='none';
+  atualizarCfgSyncStatus();
+  renderSyncModal();
+  toast('Sync desconectado.');
+}
 
 // ===== CALENDÁRIO =====
 let calTargetId=null;
