@@ -925,7 +925,10 @@ function renderAnalise(){
   const totalGcomPar=totalG+totalPar;
   const saldo=totalE-totalGcomPar;
   const pct=totalE>0?Math.min(100,Math.round(totalGcomPar/totalE*100)):0;
-  const gastosCat={};gastosQueContam.forEach(x=>{gastosCat[x.cat]=(gastosCat[x.cat]||0)+x.valor;});
+  const gastosCat={};
+  gastosQueContam.forEach(x=>{gastosCat[x.cat]=(gastosCat[x.cat]||0)+x.valor;});
+  parMes.forEach(p=>{gastosCat[p.cat]=(gastosCat[p.cat]||0)+p.valorParcela;});
+  getFixosMes(mes).forEach(f=>{gastosCat[f.cat]=(gastosCat[f.cat]||0)+f.valor;});
   const sortedG=Object.entries(gastosCat).sort((a,b)=>b[1]-a[1]);
   const maxG=sortedG[0]?.[1]||1;
   const entCat={};itens.filter(x=>x.tipo==='entrada').forEach(x=>{entCat[x.cat]=(entCat[x.cat]||0)+x.valor;});
