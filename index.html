@@ -507,7 +507,21 @@ scrollbar-width:none;
       <div id="lista-parcelas"></div>
     </div>
 
-    <!-- ABA 5: COMPARATIVO -->
+    <!-- ABA 5: FIXOS -->
+    <div class="section" id="sec-fixos">
+      <div class="card">
+        <div class="card-title">Novo gasto fixo</div>
+        <div class="form-group"><label>Nome</label><input id="fix-nome" placeholder="Ex: Aluguel, Netflix…"/></div>
+        <div class="form-group"><label>Valor (R$)</label><input id="fix-valor" type="number" placeholder="0,00"/></div>
+        <div class="form-group"><label>Categoria</label><select id="fix-cat"></select></div>
+        <div class="form-group"><label>Início (mês/ano)</label><input id="fix-inicio" placeholder="09/2026"/></div>
+        <div class="form-group"><label>Fim (mês/ano) — opcional</label><input id="fix-fim" placeholder="Deixe vazio = sem fim"/></div>
+        <button class="btn btn-accent" onclick="salvarFixo()">Adicionar fixo</button>
+      </div>
+      <div id="fixos-list"></div>
+    </div>
+
+    <!-- ABA 6: COMPARATIVO -->
     <div class="section" id="sec-comparativo">
       <div id="comp-content"></div>
     </div>
@@ -615,6 +629,10 @@ scrollbar-width:none;
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><path d="M1 10h22"/></svg>
       Parcelas
     </button>
+    <button class="nav-btn" id="nav-fixos" onclick="switchTab('fixos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Fixos
+    </button>
     <button class="nav-btn" id="nav-comparativo" onclick="switchTab('comparativo')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       Compare
@@ -647,6 +665,7 @@ let tipo='gasto';
 let usuarioAtual=null;
 let dados=[];
 let parcelas=[];
+let fixos=[];
 
 function storageKey(uid,t){return`cf_${uid}_${t}`;}
 
@@ -665,11 +684,13 @@ function loadUsuario(u){
   }
   dados=JSON.parse(localStorage.getItem(storageKey(u.id,'dados'))||'[]');
   parcelas=JSON.parse(localStorage.getItem(storageKey(u.id,'parcelas'))||'[]');
+  fixos=JSON.parse(localStorage.getItem(storageKey(u.id,'fixos'))||'[]');
 }
 
 function save(){
   localStorage.setItem(storageKey(usuarioAtual.id,'dados'),JSON.stringify(dados));
   localStorage.setItem(storageKey(usuarioAtual.id,'parcelas'),JSON.stringify(parcelas));
+  localStorage.setItem(storageKey(usuarioAtual.id,'fixos'),JSON.stringify(fixos));
 }
 
 function getUsuarios(){
@@ -922,7 +943,8 @@ function renderAnalise(){
   const totalE=itens.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+x.valor,0);
   const parMes=getParcelasMes(mes);
   const totalPar=parMes.reduce((s,p)=>s+p.valorParcela,0);
-  const totalGcomPar=totalG+totalPar;
+  const totalFix=getTotalFixosMes(mes);
+  const totalGcomPar=totalG+totalPar+totalFix;
   const saldo=totalE-totalGcomPar;
   const pct=totalE>0?Math.min(100,Math.round(totalGcomPar/totalE*100)):0;
   const gastosCat={};
@@ -946,6 +968,7 @@ function renderAnalise(){
       <div class="metric"><div class="metric-label">Gastos</div><div class="metric-value red">${fmt(totalGcomPar)}</div></div>
       <div class="metric"><div class="metric-label">Comprometido</div><div class="metric-value ${pct>85?'red':pct>65?'amber':'green'}">${pct}%</div></div>
       <div class="metric"><div class="metric-label">Parcelas</div><div class="metric-value amber">${fmt(totalPar)}</div></div>
+      <div class="metric"><div class="metric-label">Fixos</div><div class="metric-value amber">${fmt(totalFix)}</div></div>
     </div>
     <div class="card">
       <div class="card-title">Uso das entradas</div>
@@ -1106,8 +1129,9 @@ function renderComparativo(){
     const it=dados.filter(x=>getMesEfetivo(x)===m);
     const g=dados.filter(x=>x.tipo==='gasto'&&((!x.dataPgto&&getMesEfetivo(x)===m)||(x.dataPgto&&mesKey(x.dataPgto)===m))).reduce((s,x)=>s+x.valor,0);
     const par=getParcelasMes(m).reduce((s,p)=>s+p.valorParcela,0);
+    const fix=getTotalFixosMes(m);
     const e=it.filter(x=>x.tipo==='entrada').reduce((s,x)=>s+x.valor,0);
-    return{m,g:g+par,gBase:g,par,e,saldo:e-g-par};
+    return{m,g:g+par+fix,gBase:g,par,fix,e,saldo:e-g-par-fix};
   });
   const maxV=Math.max(1,...rows.map(r=>Math.max(r.g,r.e)));
   const comDados=rows.filter(r=>r.e>0||r.g>0);
@@ -1183,6 +1207,7 @@ function renderConfig(){
 
 // ===== TABS =====
 const tabMeta={
+  fixos:{title:'Gastos Fixos',sub:'Recorrentes mensais',badge:'Fixos'},
   lancar:{title:'Lançamentos',sub:'Registrar gastos e entradas',badge:'Hoje'},
   historico:{title:'Histórico',sub:'Lançamentos por mês',badge:'Lista'},
   analise:{title:'Análise',sub:'Insights do mês',badge:'Dados'},
@@ -1203,8 +1228,67 @@ function switchTab(name){
   if(name==='historico'){populateMes();renderHistorico();}
   if(name==='analise'){populateMes();renderAnalise();}
   if(name==='parcelas')renderParcelas();
+  if(name==='fixos'){populateFixCat();renderFixos();}
   if(name==='comparativo')renderComparativo();
   if(name==='config')renderConfig();
+}
+
+// ===== GASTOS FIXOS =====
+function mesKeyFromMY(s){const[m,a]=s.split('/');return a+'-'+(m.length===1?'0'+m:m);}
+function getFixosMes(mk){
+  return fixos.filter(f=>{
+    const ini=mesKeyFromMY(f.inicio);
+    const fim=f.fim?mesKeyFromMY(f.fim):null;
+    return mk>=ini&&(!fim||mk<=fim);
+  });
+}
+function getTotalFixosMes(mk){return getFixosMes(mk).reduce((s,f)=>s+f.valor,0);}
+
+function populateFixCat(){
+  const s=document.getElementById('fix-cat');
+  if(!s)return;
+  s.innerHTML=getCatsGasto().map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+function salvarFixo(){
+  const nome=document.getElementById('fix-nome').value.trim();
+  const valor=parseFloat(document.getElementById('fix-valor').value);
+  const cat=document.getElementById('fix-cat').value;
+  const inicio=document.getElementById('fix-inicio').value.trim();
+  const fim=document.getElementById('fix-fim').value.trim();
+  if(!nome||!valor||!inicio){toast('Preencha nome, valor e início');return;}
+  fixos.push({id:Date.now(),nome,valor,cat,inicio,fim:fim||null});
+  save();
+  document.getElementById('fix-nome').value='';
+  document.getElementById('fix-valor').value='';
+  document.getElementById('fix-fim').value='';
+  renderFixos();
+  toast('Fixo adicionado!');
+}
+function deletarFixo(id){
+  fixos=fixos.filter(f=>f.id!==id);
+  save();
+  renderFixos();
+}
+function renderFixos(){
+  const el=document.getElementById('fixos-list');
+  if(!el)return;
+  if(!fixos.length){el.innerHTML='<div class="card"><div class="empty">Nenhum gasto fixo cadastrado.</div></div>';return;}
+  el.innerHTML=fixos.map(f=>`
+    <div class="card">
+      <div class="item-row">
+        <div>
+          <div class="item-name">${f.nome}</div>
+          <div class="item-sub"><span class="badge badge-blue">${f.cat}</span> &nbsp; ${f.inicio}${f.fim?' → '+f.fim:' → sem fim'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="val-red">-${fmt(f.valor)}</span>
+          <button class="del-btn" onclick="deletarFixo(${f.id})">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
 }
 
 // ===== TEMAS =====
@@ -1577,6 +1661,7 @@ const _saveOriginal=save;
 function save(){
   localStorage.setItem(storageKey(usuarioAtual.id,'dados'),JSON.stringify(dados));
   localStorage.setItem(storageKey(usuarioAtual.id,'parcelas'),JSON.stringify(parcelas));
+  localStorage.setItem(storageKey(usuarioAtual.id,'fixos'),JSON.stringify(fixos));
   // push assíncrono sem bloquear
   if(getSyncBinId())setTimeout(syncPush,300);
 }
