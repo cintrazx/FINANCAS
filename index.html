@@ -2460,7 +2460,51 @@ function salvarCDIBase(v){
 function getCatInvest(){return getCatsGasto().find(isCatInvest)||null;}
 function totalAportado(a){return(a.aportes||[]).reduce((s,x)=>s+x.valor,0);}
 function todosAportes(){return investimentos.flatMap(a=>(a.aportes||[]).map(ap=>({...ap,ativoId:a.id,ativoNome:a.nome})));}
-function aportesDoMes(mk){return todosAportes().filter(ap=>mesKey(ap.data)===mk);}
+function aportesDoMes(mk){return todosAportes().filter(ap=>!ap.saldoAnterior&&mesKey(ap.data)===mk);}
+
+// --- saldo anterior: dinheiro que já estava no investimento antes de começar a registrar ---
+// quanto os aportes registrados valeriam na data do extrato
+function baseRegistrada(a,dataRef){
+  const dR=strToDate(dataRef);
+  return(a.aportes||[]).filter(ap=>strToDate(ap.data)<=dR)
+    .reduce((s,ap)=>s+(usaCDI(a)?ap.valor*fatorCDI(a.pctCDI,strToDate(ap.data),dR):ap.valor),0);
+}
+// diferença entre o extrato e o que os aportes explicam (0 se estiver tudo registrado)
+function valorRefSaldo(a){return usaCDI(a)?(a.ancora?a.ancora.valor:null):(a.valorAtual||0);}
+function saldoNaoRegistrado(a){
+  if(a.ignorarSaldo!=null&&a.ignorarSaldo===valorRefSaldo(a))return 0; // usuário disse que é rendimento
+  if(usaCDI(a)){
+    if(!a.ancora)return 0;
+    const dif=a.ancora.valor-baseRegistrada(a,a.ancora.data);
+    return dif>Math.max(10,a.ancora.valor*0.02)?dif:0;
+  }
+  const apo=totalAportado(a),v=a.valorAtual||0;
+  return(v>apo*1.5&&v-apo>50)?v-apo:0;
+}
+function registrarSaldoAnterior(id){
+  const a=investimentos.find(x=>x.id===id);if(!a)return;
+  const dif=saldoNaoRegistrado(a);if(!(dif>0))return;
+  const data=usaCDI(a)?a.ancora.data:(a.atualizadoEm||todayStr());
+  a.aportes.push({id:novoId(),valor:Math.round(dif*100)/100,data,lancamentoId:null,saldoAnterior:true});
+  save();renderInvestimentos();
+  toast('✓ '+fmt(dif)+' registrado como saldo anterior');
+}
+function perguntarSaldoAnterior(a,depois){
+  const dif=saldoNaoRegistrado(a);
+  if(!(dif>0)){if(depois)depois();return;}
+  const v=usaCDI(a)?a.ancora.valor:(a.valorAtual||0),base=v-dif;
+  perguntar('Esse dinheiro já estava lá?',
+    `O valor informado (<strong>${fmt(v)}</strong>) é <strong>${fmt(dif)}</strong> maior do que os aportes registrados explicam (${fmt(base)}).<br><br>Se esse dinheiro já estava no investimento antes de você começar a registrar, ele é <strong>saldo anterior</strong>, não lucro. Assim o app não calcula IR nem rentabilidade em cima dele.`,
+    'Sim, é saldo anterior','Não, é rendimento',
+    ()=>{registrarSaldoAnterior(a.id);if(depois)setTimeout(depois,50);},
+    ()=>{ignorarSaldoAnterior(a.id,true);if(depois)setTimeout(depois,50);});
+}
+function ignorarSaldoAnterior(id,silencioso){
+  const a=investimentos.find(x=>x.id===id);if(!a)return;
+  a.ignorarSaldo=valorRefSaldo(a);
+  save();renderInvestimentos();
+  if(!silencioso)toast('Ok, mantido como rendimento');
+}
 function idsLancVinculados(){return new Set(todosAportes().filter(a=>a.lancamentoId).map(a=>a.lancamentoId));}
 function findAporteDoLancamento(lid){
   for(const a of investimentos){const ap=(a.aportes||[]).find(x=>x.lancamentoId===lid);if(ap)return{ativo:a,aporte:ap};}
@@ -2618,7 +2662,7 @@ function salvarInvest(){
   invCtx=null;invAberto=a.id;
   save();fecharModal('modal-inv-form');rerenderAbaAtual();
   toast('✓ Investimento adicionado!');
-  if(!ctx)perguntarLancarGasto(a,ap);
+  perguntarSaldoAnterior(a,ctx?null:()=>perguntarLancarGasto(a,ap));
 }
 
 // --- Investimento → Lançar ---
@@ -2678,6 +2722,7 @@ function salvarValorAtual(){
   if(usaCDI(a))a.ancora={valor:v,data:todayStr()};
   save();fecharModal('modal-inv-valor');renderInvestimentos();
   toast('✓ Valor atualizado');
+  setTimeout(()=>perguntarSaldoAnterior(a),50);
 }
 function excluirAporte(ativoId,apId){
   const a=investimentos.find(x=>x.id===ativoId);if(!a)return;
@@ -2799,10 +2844,15 @@ function renderInvestimentos(){
           ${aberto?`<div class="inv-detail" onclick="event.stopPropagation()">
             <div class="card-title" style="margin-bottom:4px;">Aportes</div>
             ${aps.map(ap=>`<div class="inv-ap-row">
-              <span>${ap.data}${ap.lancamentoId&&dados.some(d=>d.id===ap.lancamentoId)?' <span class="badge badge-purple" title="Vinculado a um lançamento">🔗 lançado</span>':''}</span>
+              <span>${ap.data}${ap.saldoAnterior?' <span class="badge badge-neutral" title="Dinheiro que já estava no investimento antes de começar a registrar">saldo anterior</span>':''}${ap.lancamentoId&&dados.some(d=>d.id===ap.lancamentoId)?' <span class="badge badge-purple" title="Vinculado a um lançamento">🔗 lançado</span>':''}</span>
               <span style="display:flex;align-items:center;gap:4px;"><span style="font-family:var(--mono);color:var(--text);">${fmt(ap.valor)}</span>
                 <button class="del-btn" onclick="excluirAporte(${a.id},${ap.id})" title="Excluir aporte"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></span>
             </div>`).join('')}
+            ${(()=>{const dif=saldoNaoRegistrado(a);if(!dif)return'';const v=cdi?a.ancora.valor:va;return`<div class="hint-box" style="background:var(--amber-bg);margin:10px 0 0;">
+              ⚠️ ${cdi?`O extrato de ${a.ancora.data} mostra`:'O valor atual é'} <strong>${fmt(v)}</strong>, mas os aportes registrados explicam só ${fmt(v-dif)}. Se os outros <strong>${fmt(dif)}</strong> já estavam aí antes de você começar a registrar, o app está contando esse dinheiro como lucro${cdi&&!a.isentoIR?' e cobrando IR em cima':''}.
+              <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px;" onclick="registrarSaldoAnterior(${a.id})">Registrar ${fmt(dif)} como saldo anterior</button>
+              <div style="text-align:center;"><button class="link-btn" onclick="ignorarSaldoAnterior(${a.id})">Não, é rendimento mesmo</button></div>
+            </div>`;})()}
             ${cdi?(()=>{const ir=irEstimado(a);return`<div class="viz-detail" style="grid-template-columns:1fr;margin-top:10px;background:var(--surface);">
               <div>Valor bruto hoje<b>${fmt(va)}</b></div>
               <div>Rendimento até agora<b class="${r>=0?'pos':'neg'}">${r>=0?'+':'−'}${fmt(Math.abs(r))}</b></div>
