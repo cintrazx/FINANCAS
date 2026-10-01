@@ -514,10 +514,10 @@ input:disabled{opacity:.6;}
 <div class="modal-overlay hidden" id="modal-inv-escolher">
   <div class="modal" style="position:relative;">
     <button class="icon-btn modal-close" onclick="fecharEscolhaInvest()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    <div class="modal-title">💰 Registrar em Investimentos?</div>
+    <div class="modal-title" id="inv-escolher-titulo">💰 Registrar em Investimentos?</div>
     <div class="modal-sub" id="inv-escolher-sub"></div>
     <div id="inv-escolher-lista"></div>
-    <button class="btn btn-accent" onclick="novoInvestDoLancamento()">+ Novo investimento</button>
+    <button class="btn btn-accent" id="inv-escolher-novo" onclick="novoInvestDoLancamento()">+ Novo investimento</button>
     <button class="btn btn-outline" style="margin-top:8px;" onclick="fecharEscolhaInvest()">Agora não</button>
   </div>
 </div>
@@ -537,6 +537,7 @@ input:disabled{opacity:.6;}
       <label class="dif-toggle"><input type="checkbox" id="inv-isento"/><div class="dif-toggle-switch"></div><span class="dif-toggle-label">Isento de IR (LCI, LCA)</span></label>
       <div class="hint-box">Com o % do CDI, o app calcula sozinho quanto o investimento vale hoje.</div>
     </div>
+    <label class="dif-toggle"><input type="checkbox" id="inv-eh-saldo"/><div class="dif-toggle-switch"></div><span class="dif-toggle-label">É onde fica o meu saldo (guardar e tirar dinheiro daqui não é gasto nem entrada)</span></label>
     <div id="inv-campos-aporte">
     <div class="form-group"><label>Valor do 1º aporte (R$)</label><input type="number" id="inv-aporte" placeholder="0,00" min="0" step="0.01" inputmode="decimal"/></div>
     <div class="form-group"><label>Data do aporte</label>
@@ -555,6 +556,26 @@ input:disabled{opacity:.6;}
 </div>
 
 <!-- MODAL: NOVO APORTE -->
+<div class="modal-overlay hidden" id="modal-inv-resgate">
+  <div class="modal" style="position:relative;">
+    <button class="icon-btn modal-close" onclick="fecharModal('modal-inv-resgate')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div class="modal-title">💸 Resgatar</div>
+    <div class="modal-sub" id="inv-rg-sub"></div>
+    <div class="form-group"><label>Valor (R$)</label><input type="number" id="inv-rg-valor" placeholder="0,00" min="0" step="0.01" inputmode="decimal"/>
+      <div style="text-align:right;"><button class="link-btn" style="padding:6px 0;" onclick="resgatarTudo()">Resgatar tudo</button></div></div>
+    <div class="form-group"><label>Data</label>
+      <div class="date-input-wrap">
+        <input type="text" id="inv-rg-data" maxlength="10" placeholder="dd/mm/aaaa" inputmode="numeric"/>
+        <button class="cal-icon-btn" type="button" onclick="abrirCalendario('inv-rg-data',event)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline" style="flex:1" onclick="fecharModal('modal-inv-resgate')">Cancelar</button>
+      <button class="btn btn-accent" style="flex:1" onclick="salvarResgate()">Resgatar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay hidden" id="modal-inv-aporte">
   <div class="modal" style="position:relative;">
     <button class="icon-btn modal-close" onclick="fecharModal('modal-inv-aporte')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
@@ -1040,8 +1061,9 @@ function getCatsGasto(){return usuarioAtual?.catsGasto||SERGIO.catsGasto;}
 function getCatsEntrada(){return usuarioAtual?.catsEntrada||SERGIO.catsEntrada;}
 
 // ===== HELPERS =====
-function fmt(v){return'R$\u00a0'+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function fmtS(v){return'R$\u00a0'+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});}
+// negativos como "−R$ 150" (sinal antes do R$)
+function fmt(v){v=Number(v)||0;return(v<=-0.005?'−':'')+'R$\u00a0'+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtS(v){v=Number(v)||0;return(v<=-0.5?'−':'')+'R$\u00a0'+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});}
 function todayStr(){const d=new Date();return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();}
 function pad(n){return String(n).padStart(2,'0');}
 function mesKey(s){const[d,m,a]=s.split('/');return a+'-'+m;}
@@ -1352,6 +1374,7 @@ function lancar(){
   document.getElementById('inp-cluster').value='';
   populateMes();renderResumoDia();
   if(tipo==='gasto'&&isCatInvest(cat))abrirEscolhaInvest(novo);
+  else if(tipo==='entrada'&&isCatResgate(cat)&&investimentos.length)abrirEscolhaInvest(novo,'resgate');
   toast(tipo==='gasto'?(dataPgto?'✓ Gasto registrado (pagamento em '+dataPgto+')':'✓ Gasto registrado!'):'✓ Entrada registrada!');
 }
 
@@ -1430,7 +1453,7 @@ function deletar(id){
   if(!confirm('Excluir este lançamento?'))return;
   const v=findAporteDoLancamento(id);
   if(v){
-    if(confirm(`Este lançamento está vinculado a um aporte de ${fmt(v.aporte.valor)} em "${v.ativo.nome}".\n\nRemover o aporte também?`)){
+    if(confirm(`Este lançamento está vinculado a ${v.aporte.valor<0?'um resgate':'um aporte'} de ${fmt(Math.abs(v.aporte.valor))} em "${v.ativo.nome}".\n\nRemover ${v.aporte.valor<0?'o resgate':'o aporte'} também?`)){
       v.ativo.aportes=v.ativo.aportes.filter(x=>x.id!==v.aporte.id);
       v.ativo.valorAtual=Math.max(0,(v.ativo.valorAtual||0)-v.aporte.valor);
     }else{
@@ -1487,7 +1510,7 @@ function renderAnalise(){
   const invMesA=investidoMes(mes);
   let invHtml='';
   if(invMesA>0||prefs.metaInvest>0){
-    const pm=prefs.metaInvest>0?Math.min(100,Math.round(invMesA/prefs.metaInvest*100)):null;
+    const pm=prefs.metaInvest>0?Math.max(0,Math.min(100,Math.round(invMesA/prefs.metaInvest*100))):null;
     invHtml=`<div class="card a-l">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div><div class="card-title" style="margin-bottom:4px;">Investido em ${MESES[parseInt(mes.split('-')[1])]}</div>
@@ -1890,9 +1913,14 @@ function compRange(periodo){
 }
 // números de um mês. consumo = gastos sem a categoria de investimento
 function calcMes(m,vinc){
-  let e=0,gLanc=0,gInv=0,gInvSolto=0;
+  let e=0,eResg=0,eResgSolto=0,gLanc=0,gInv=0,gInvSolto=0;
   dados.forEach(x=>{
-    if(x.tipo==='entrada'){if(getMesEfetivo(x)===m)e+=x.valor;return;}
+    if(x.tipo==='entrada'){
+      if(getMesEfetivo(x)!==m)return;
+      e+=x.valor;
+      if(isCatResgate(x.cat)){eResg+=x.valor;if(!vinc.has(x.id))eResgSolto+=x.valor;}
+      return;
+    }
     if(mesGasto(x)!==m)return;
     gLanc+=x.valor;
     if(isCatInvest(x.cat)){gInv+=x.valor;if(!vinc.has(x.id))gInvSolto+=x.valor;}
@@ -1902,8 +1930,9 @@ function calcMes(m,vinc){
   const aport=aportesDoMes(m).reduce((s,a)=>s+a.valor,0);
   const gTotal=gLanc+par+fix;
   const varCons=gLanc-gInv,parCons=par-parInv,fixCons=fix-fixInv;
-  return{m,e,gTotal,varCons,parCons,fixCons,consumo:varCons+parCons+fixCons,
-    investido:aport+gInvSolto+parInv+fixInv,saldo:e-gTotal,ativo:e>0||gTotal>0||aport>0};
+  // e = renda (sem resgates); o saldo usa todo o dinheiro que entrou na conta
+  return{m,e:e-eResg,gTotal,varCons,parCons,fixCons,consumo:varCons+parCons+fixCons,
+    investido:aport+gInvSolto+parInv+fixInv-eResgSolto,saldo:e-gTotal,ativo:e>0||gTotal>0||aport!==0};
 }
 function catsConsumoMes(m,acc){
   dados.forEach(x=>{if(x.tipo==='gasto'&&!isCatInvest(x.cat)&&mesGasto(x)===m)acc[x.cat]=(acc[x.cat]||0)+x.valor;});
@@ -2043,7 +2072,7 @@ function renderComparativo(){
   const taxaCls=taxa===null?'':taxa>=20?'green':taxa>=0?'amber':'red';
   h+=`<div class="metric-grid">
     <div class="metric"><div class="metric-label">Gasto médio/mês</div><div class="metric-value">${fmtS(sumCons/n)}</div><div class="metric-sub">sem investimentos</div></div>
-    <div class="metric"><div class="metric-label">Entrada média/mês</div><div class="metric-value">${fmtS(sumE/n)}</div><div class="metric-sub">${perLbl}</div></div>
+    <div class="metric"><div class="metric-label">Renda média/mês</div><div class="metric-value">${fmtS(sumE/n)}</div><div class="metric-sub">${perLbl}</div></div>
     <div class="metric"><div class="metric-label">Taxa de poupança</div><div class="metric-value ${taxaCls}">${taxa===null?'—':Math.round(taxa)+'%'}</div><div class="metric-sub">do que entrou, não foi gasto</div></div>
     <div class="metric"><div class="metric-label">Investido</div><div class="metric-value">${fmtS(sumInv)}</div><div class="metric-sub">no período</div></div>
     <div class="metric"><div class="metric-label">Patrimônio</div><div class="metric-value">${fmtS(patrimonio)}</div><div class="metric-sub">${rentPat===null?'valor atual investido':fmtPct(rentPat)+' sobre o aportado'}</div></div>
@@ -2412,6 +2441,18 @@ let invAporteAtivoId=null;
 let invValorAtivoId=null;
 
 function isCatInvest(c){return /invest/i.test(c||'');}
+// entradas que são dinheiro voltando de um investimento (não são renda)
+function isCatResgate(c){return /resgat/i.test(c||'');}
+function garantirCatResgate(){
+  let c=getCatsEntrada().find(isCatResgate);
+  if(c)return c;
+  c='Resgate investimento';
+  if(!usuarioAtual.catsEntrada)usuarioAtual.catsEntrada=[...getCatsEntrada()];
+  const arr=usuarioAtual.catsEntrada,io=arr.findIndex(x=>normTxt(x)==='outros');
+  if(io>=0)arr.splice(io,0,c);else arr.push(c);
+  persistirUsuario();refreshCatSelects();
+  return c;
+}
 
 // --- rendimento pelo CDI (estimativa: dias úteis sem feriados, capitalização diária base 252) ---
 const TIPOS_CDI=['Renda Fixa','Reserva'];
@@ -2425,13 +2466,24 @@ function diasUteis(a,b){
 }
 function fatorCDI(pct,ini,fim){return Math.pow(1+cdiDiario()*pct/100,diasUteis(ini,fim));}
 // valor bruto estimado hoje: parte do valor corrigido pelo extrato (âncora), se houver
+// o aporte/resgate já está dentro do valor do extrato (âncora)?
+function dentroDaAncora(a,ap){
+  if(!a.ancora)return false;
+  const d=strToDate(ap.data),dA=strToDate(a.ancora.data);
+  if(d<dA)return true;
+  if(d>dA)return false;
+  // mesmo dia do extrato: depende de ter sido registrado antes ou depois da correção
+  if(ap.saldoAnterior||!ap.criadoEm)return true;
+  if(!a.ancora.ts)return false;
+  return ap.criadoEm<=a.ancora.ts;
+}
 function estimativaCDI(a){
   const hoje=strToDate(todayStr());
   const anc=a.ancora,dAnc=anc?strToDate(anc.data):null;
   let tot=anc?anc.valor*fatorCDI(a.pctCDI,dAnc,hoje):0;
   (a.aportes||[]).forEach(ap=>{
     const d=strToDate(ap.data);
-    if(dAnc&&d<=dAnc)return;          // já está dentro do valor do extrato
+    if(dentroDaAncora(a,ap))return;   // já está dentro do valor do extrato
     tot+=d>hoje?ap.valor:ap.valor*fatorCDI(a.pctCDI,d,hoje);
   });
   return tot;
@@ -2445,7 +2497,8 @@ function irEstimado(a){
   const apo=totalAportado(a),ganho=valorAtualDe(a)-apo;
   if(ganho<=0||apo<=0)return 0;
   const hoje=strToDate(todayStr());
-  const idade=a.aportes.reduce((s,ap)=>s+ap.valor*Math.max(0,(hoje-strToDate(ap.data))/86400000),0)/apo;
+  const pos=a.aportes.filter(ap=>ap.valor>0),sp=pos.reduce((s,ap)=>s+ap.valor,0)||1;
+  const idade=pos.reduce((s,ap)=>s+ap.valor*Math.max(0,(hoje-strToDate(ap.data))/86400000),0)/sp;
   return ganho*aliquotaIR(idade)/100;
 }
 function toggleCamposCDI(){
@@ -2466,7 +2519,7 @@ function aportesDoMes(mk){return todosAportes().filter(ap=>!ap.saldoAnterior&&me
 // quanto os aportes registrados valeriam na data do extrato
 function baseRegistrada(a,dataRef){
   const dR=strToDate(dataRef);
-  return(a.aportes||[]).filter(ap=>strToDate(ap.data)<=dR)
+  return(a.aportes||[]).filter(ap=>a.ancora&&a.ancora.data===dataRef?dentroDaAncora(a,ap):strToDate(ap.data)<=dR)
     .reduce((s,ap)=>s+(usaCDI(a)?ap.valor*fatorCDI(a.pctCDI,strToDate(ap.data),dR):ap.valor),0);
 }
 // diferença entre o extrato e o que os aportes explicam (0 se estiver tudo registrado)
@@ -2485,7 +2538,7 @@ function registrarSaldoAnterior(id){
   const a=investimentos.find(x=>x.id===id);if(!a)return;
   const dif=saldoNaoRegistrado(a);if(!(dif>0))return;
   const data=usaCDI(a)?a.ancora.data:(a.atualizadoEm||todayStr());
-  a.aportes.push({id:novoId(),valor:Math.round(dif*100)/100,data,lancamentoId:null,saldoAnterior:true});
+  a.aportes.push({id:novoId(),valor:Math.round(dif*100)/100,data,lancamentoId:null,saldoAnterior:true,criadoEm:Date.now()});
   save();renderInvestimentos();
   toast('✓ '+fmt(dif)+' registrado como saldo anterior');
 }
@@ -2517,7 +2570,8 @@ function investidoMes(mk,vinc){
   const soltos=dados.filter(x=>x.tipo==='gasto'&&isCatInvest(x.cat)&&!vinc.has(x.id)&&mesGasto(x)===mk).reduce((s,x)=>s+x.valor,0);
   const fixInv=getFixosMes(mk).filter(f=>isCatInvest(f.cat)).reduce((s,f)=>s+f.valor,0);
   const parInv=getParcelasMes(mk).filter(p=>isCatInvest(p.cat)).reduce((s,p)=>s+p.valorParcela,0);
-  return ap+soltos+fixInv+parInv;
+  const resgSoltos=dados.filter(x=>x.tipo==='entrada'&&isCatResgate(x.cat)&&!vinc.has(x.id)&&getMesEfetivo(x)===mk).reduce((s,x)=>s+x.valor,0);
+  return ap+soltos+fixInv+parInv-resgSoltos;
 }
 
 function persistirUsuario(){
@@ -2546,6 +2600,8 @@ function criarCatInvest(){garantirCatInvest();toast('✓ Categoria "Investimento
 // --- pergunta genérica (não destrutiva) ---
 let _pergSim=null,_pergNao=null;
 function perguntar(titulo,html,sim,nao,onSim,onNao){
+  // aviso que já estava na tela sobe para não cobrir a pergunta
+  document.querySelectorAll('.toast').forEach(t=>{t.style.bottom='auto';t.style.top='calc(16px + env(safe-area-inset-top))';});
   document.getElementById('perg-titulo').textContent=titulo;
   document.getElementById('perg-texto').innerHTML=html;
   document.getElementById('perg-sim').textContent=sim||'Sim';
@@ -2561,9 +2617,14 @@ function responderPergunta(ok){
 }
 
 // --- Lançar → Investimento ---
-function abrirEscolhaInvest(l){
-  invCtx={lancamentoId:l.id,valor:l.valor,data:l.data};
-  document.getElementById('inv-escolher-sub').innerHTML=`Você lançou <strong>${fmt(l.valor)}</strong> em ${esc(l.cat)}.<br>${investimentos.length?'Em qual investimento esse aporte entra?':'Quer acompanhar esse valor na aba Investimentos?'}`;
+function abrirEscolhaInvest(l,modo){
+  invCtx={lancamentoId:l.id,valor:l.valor,data:l.data,modo:modo||'aporte'};
+  const rg=modo==='resgate';
+  document.getElementById('inv-escolher-titulo').textContent=rg?'💸 Saiu de qual investimento?':'💰 Registrar em Investimentos?';
+  document.getElementById('inv-escolher-novo').style.display=rg?'none':'block';
+  document.getElementById('inv-escolher-sub').innerHTML=rg
+    ?`Você lançou uma entrada de <strong>${fmt(l.valor)}</strong> em ${esc(l.cat)}.<br>Escolha o investimento para descontar esse valor dele.`
+    :`Você lançou <strong>${fmt(l.valor)}</strong> em ${esc(l.cat)}.<br>${investimentos.length?'Em qual investimento esse aporte entra?':'Quer acompanhar esse valor na aba Investimentos?'}`;
   document.getElementById('inv-escolher-lista').innerHTML=investimentos.map(a=>`
     <button class="inv-pick" onclick="escolherAtivo(${a.id})">
       <span style="min-width:0;"><strong>${esc(a.nome)}</strong><br><span class="item-sub">${esc(a.tipo)}${a.instituicao?' · '+esc(a.instituicao):''}</span></span>
@@ -2575,10 +2636,11 @@ function fecharEscolhaInvest(){invCtx=null;fecharModal('modal-inv-escolher');}
 function escolherAtivo(id){
   const a=investimentos.find(x=>x.id===id);
   if(!a||!invCtx)return;
-  a.aportes.push({id:novoId(),valor:invCtx.valor,data:invCtx.data,lancamentoId:invCtx.lancamentoId});
-  a.valorAtual=(a.valorAtual||0)+invCtx.valor;
+  const rg=invCtx.modo==='resgate',v=rg?-invCtx.valor:invCtx.valor;
+  a.aportes.push({id:novoId(),valor:v,data:invCtx.data,lancamentoId:invCtx.lancamentoId,criadoEm:Date.now(),...(rg?{resgate:true}:{})});
+  a.valorAtual=Math.max(0,(a.valorAtual||0)+v);
   invCtx=null;save();fecharModal('modal-inv-escolher');
-  toast('✓ Aporte registrado em '+a.nome);
+  toast(rg?'✓ Resgate descontado de '+a.nome:'✓ Aporte registrado em '+a.nome);
 }
 function novoInvestDoLancamento(){
   const ctx=invCtx;
@@ -2594,6 +2656,7 @@ function abrirFormInvest(ctx){
   sel.innerHTML=TIPOS_INV.map(t=>`<option>${t}</option>`).join('');
   ['inv-nome','inv-inst','inv-atual','inv-pct-cdi'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('inv-isento').checked=false;
+  document.getElementById('inv-eh-saldo').checked=false;
   document.getElementById('inv-form-titulo').textContent='Novo investimento';
   document.getElementById('inv-form-sub').textContent='Cadastre o ativo e o primeiro aporte. Os próximos aportes entram no mesmo investimento.';
   document.getElementById('inv-campos-aporte').style.display='block';
@@ -2618,6 +2681,7 @@ function abrirEditarInvest(id){
   document.getElementById('inv-inst').value=a.instituicao||'';
   document.getElementById('inv-pct-cdi').value=a.pctCDI||'';
   document.getElementById('inv-isento').checked=!!a.isentoIR;
+  document.getElementById('inv-eh-saldo').checked=!!a.ehSaldo;
   document.getElementById('inv-form-titulo').textContent='Editar investimento';
   document.getElementById('inv-form-sub').textContent='Os aportes continuam como estão.';
   document.getElementById('inv-campos-aporte').style.display='none';
@@ -2640,7 +2704,7 @@ function salvarInvest(){
     const c=lerCamposCDI(tipoI);
     // ao ligar o CDI num ativo que tinha valor digitado, esse valor vira o ponto de partida do cálculo
     if(c.pctCDI&&!a.pctCDI&&!a.ancora&&a.atualizadoEm&&a.valorAtual>0&&a.valorAtual!==totalAportado(a))a.ancora={valor:a.valorAtual,data:a.atualizadoEm};
-    Object.assign(a,{nome,tipo:tipoI,instituicao:inst,pctCDI:c.pctCDI,isentoIR:c.isentoIR});
+    Object.assign(a,{nome,tipo:tipoI,instituicao:inst,pctCDI:c.pctCDI,isentoIR:c.isentoIR,ehSaldo:document.getElementById('inv-eh-saldo').checked});
     invEditId=null;save();fecharModal('modal-inv-form');renderInvestimentos();
     toast('✓ Investimento atualizado');
     return;
@@ -2653,11 +2717,12 @@ function salvarInvest(){
   if(!/^\d{2}\/\d{2}\/\d{4}$/.test(data)){toast('⚠ Data inválida (dd/mm/aaaa)');return;}
   const atual=atualStr===''?aporte:parseFloat(atualStr);
   const ctx=invCtx;
-  const ap={id:novoId(),valor:aporte,data,lancamentoId:ctx?ctx.lancamentoId:null};
+  const agora=Date.now();
+  const ap={id:novoId(),valor:aporte,data,lancamentoId:ctx?ctx.lancamentoId:null,criadoEm:agora};
   const c=lerCamposCDI(tipoI);
-  const a={id:novoId(),nome,tipo:tipoI,instituicao:inst,valorAtual:isNaN(atual)?aporte:atual,atualizadoEm:todayStr(),aportes:[ap],pctCDI:c.pctCDI,isentoIR:c.isentoIR};
+  const a={id:novoId(),nome,tipo:tipoI,instituicao:inst,valorAtual:isNaN(atual)?aporte:atual,atualizadoEm:todayStr(),aportes:[ap],pctCDI:c.pctCDI,isentoIR:c.isentoIR,ehSaldo:document.getElementById('inv-eh-saldo').checked};
   // CDI + valor atual informado: o app parte desse valor a partir de hoje
-  if(c.pctCDI&&atualStr!==''&&!isNaN(atual))a.ancora={valor:atual,data:todayStr()};
+  if(c.pctCDI&&atualStr!==''&&!isNaN(atual))a.ancora={valor:atual,data:todayStr(),ts:agora};
   investimentos.push(a);
   invCtx=null;invAberto=a.id;
   save();fecharModal('modal-inv-form');rerenderAbaAtual();
@@ -2666,9 +2731,19 @@ function salvarInvest(){
 }
 
 // --- Investimento → Lançar ---
+function linkNaoPerguntar(a){return`<div style="margin-top:12px;"><button class="link-btn" style="padding:4px 0;text-align:left;" onclick="marcarComoSaldo(${a.id})">💳 ${esc(a.nome)} é o meu saldo: não perguntar mais</button></div>`;}
+function marcarComoSaldo(id){
+  const a=investimentos.find(x=>x.id===id);if(!a)return;
+  a.ehSaldo=true;save();
+  _pergSim=_pergNao=null;
+  delete document.getElementById('modal-pergunta').dataset.fixo;
+  fecharModal('modal-pergunta');rerenderAbaAtual();
+  toast('Ok! Não pergunto mais para '+a.nome+' (dá para mudar em Editar)');
+}
 function perguntarLancarGasto(a,ap){
+  if(a.ehSaldo)return;
   perguntar('Lançar também como gasto?',
-    `Registrar <strong>${fmt(ap.valor)}</strong> na categoria <strong>${esc(getCatInvest()||'Investimentos')}</strong> em ${ap.data}.<br>Isso desconta do saldo do mês.`,
+    `Registrar <strong>${fmt(ap.valor)}</strong> na categoria <strong>${esc(getCatInvest()||'Investimentos')}</strong> em ${ap.data}.<br>Isso desconta do saldo do mês.`+linkNaoPerguntar(a),
     'Sim, lançar','Não',
     ()=>{
       const cat=garantirCatInvest();
@@ -2697,13 +2772,58 @@ function salvarAporte(){
   const data=document.getElementById('inv-ap-data').value.trim();
   if(!valor||valor<=0){toast('⚠ Informe o valor');return;}
   if(!/^\d{2}\/\d{2}\/\d{4}$/.test(data)){toast('⚠ Data inválida (dd/mm/aaaa)');return;}
-  const ap={id:novoId(),valor,data,lancamentoId:null};
+  const ap={id:novoId(),valor,data,lancamentoId:null,criadoEm:Date.now()};
   a.aportes.push(ap);
   a.valorAtual=(a.valorAtual||0)+valor;
   save();fecharModal('modal-inv-aporte');renderInvestimentos();
   toast('✓ Aporte registrado');
   perguntarLancarGasto(a,ap);
 }
+let invResgateAtivoId=null;
+function abrirResgatar(id){
+  const a=investimentos.find(x=>x.id===id);if(!a)return;
+  invResgateAtivoId=id;
+  document.getElementById('inv-rg-sub').innerHTML=`${esc(a.nome)}${a.instituicao?' · '+esc(a.instituicao):''}<br>Disponível ${usaCDI(a)?'(estimado)':''}: <strong>${fmt(valorAtualDe(a))}</strong>`;
+  document.getElementById('inv-rg-valor').value='';
+  document.getElementById('inv-rg-data').value=todayStr();
+  abrirModal('modal-inv-resgate');
+}
+function resgatarTudo(){
+  const a=investimentos.find(x=>x.id===invResgateAtivoId);if(!a)return;
+  document.getElementById('inv-rg-valor').value=valorAtualDe(a).toFixed(2);
+}
+function salvarResgate(){
+  const a=investimentos.find(x=>x.id===invResgateAtivoId);if(!a)return;
+  const valor=Math.round(parseFloat(document.getElementById('inv-rg-valor').value)*100)/100;
+  const data=document.getElementById('inv-rg-data').value.trim();
+  if(!valor||valor<=0){toast('⚠ Informe o valor');return;}
+  if(!/^\d{2}\/\d{2}\/\d{4}$/.test(data)){toast('⚠ Data inválida (dd/mm/aaaa)');return;}
+  const disp=valorAtualDe(a);
+  if(valor>disp+0.01){toast('⚠ Maior que o disponível ('+fmt(disp)+')');return;}
+  const rg={id:novoId(),valor:-valor,data,lancamentoId:null,resgate:true,criadoEm:Date.now()};
+  a.aportes.push(rg);
+  a.valorAtual=Math.max(0,(a.valorAtual||0)-valor);
+  save();fecharModal('modal-inv-resgate');renderInvestimentos();
+  toast('✓ Resgate de '+fmt(valor)+' registrado');
+  perguntarLancarEntrada(a,rg,valor);
+}
+// Investimento → Lançar: o dinheiro voltou para a conta
+function perguntarLancarEntrada(a,rg,valor){
+  if(a.ehSaldo)return;
+  perguntar('Lançar como entrada?',
+    `Registrar <strong>${fmt(valor)}</strong> como entrada na categoria <strong>${esc(getCatsEntrada().find(isCatResgate)||'Resgate investimento')}</strong> em ${rg.data}.<br>O dinheiro volta para o saldo do mês. Não conta como renda nas estatísticas do Compare.`+linkNaoPerguntar(a),
+    'Sim, lançar','Não',
+    ()=>{
+      const cat=garantirCatResgate();
+      const l={id:novoId(),tipo:'entrada',valor,desc:'Resgate: '+a.nome,cat,data:rg.data,dataPgto:null,cluster:null,pago:true};
+      dados.push(l);
+      const alvo=(investimentos.find(x=>x.id===a.id)?.aportes||[]).find(x=>x.id===rg.id);
+      if(alvo)alvo.lancamentoId=l.id;
+      save();populateMes();renderResumoDia();rerenderAbaAtual();
+      toast('✓ Lançado como entrada');
+    });
+}
+
 function abrirAtualizarValor(id){
   const a=investimentos.find(x=>x.id===id);if(!a)return;
   invValorAtivoId=id;
@@ -2719,7 +2839,7 @@ function salvarValorAtual(){
   const v=parseFloat(document.getElementById('inv-val-atual').value);
   if(isNaN(v)||v<0){toast('⚠ Informe um valor válido');return;}
   a.valorAtual=v;a.atualizadoEm=todayStr();
-  if(usaCDI(a))a.ancora={valor:v,data:todayStr()};
+  if(usaCDI(a))a.ancora={valor:v,data:todayStr(),ts:Date.now()};
   save();fecharModal('modal-inv-valor');renderInvestimentos();
   toast('✓ Valor atualizado');
   setTimeout(()=>perguntarSaldoAnterior(a),50);
@@ -2727,7 +2847,7 @@ function salvarValorAtual(){
 function excluirAporte(ativoId,apId){
   const a=investimentos.find(x=>x.id===ativoId);if(!a)return;
   const ap=a.aportes.find(x=>x.id===apId);if(!ap)return;
-  if(!confirm(`Excluir o aporte de ${fmt(ap.valor)} do dia ${ap.data}?`))return;
+  if(!confirm(`Excluir ${ap.valor<0?'o resgate':'o aporte'} de ${fmt(Math.abs(ap.valor))} do dia ${ap.data}?`))return;
   const l=ap.lancamentoId?dados.find(d=>d.id===ap.lancamentoId):null;
   if(l&&confirm(`Esse aporte está vinculado ao lançamento de ${fmt(l.valor)} do dia ${l.data}.\n\nRemover o lançamento também?`)){
     dados=dados.filter(d=>d.id!==l.id);
@@ -2772,7 +2892,7 @@ function renderInvestimentos(){
     </div>`;
   }
   if(prefs.metaInvest>0){
-    const p=Math.min(100,Math.round(invMes/prefs.metaInvest*100));
+    const p=Math.max(0,Math.min(100,Math.round(invMes/prefs.metaInvest*100)));
     h+=`<div class="card"><div class="card-title">Meta do mês · ${mesLabel(mk)}</div>
       <div class="progress-wrap">
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);"><span>${fmt(invMes)} de ${fmt(prefs.metaInvest)}</span><span>${p}%</span></div>
@@ -2827,13 +2947,14 @@ function renderInvestimentos(){
         const va=valorAtualDe(a),apo=totalAportado(a),r=va-apo,rp=apo>0?r/apo*100:0;
         const cdi=usaCDI(a);
         const aps=[...a.aportes].sort((x,y)=>strToDate(y.data)-strToDate(x.data));
+        const nAp=a.aportes.filter(x=>x.valor>0&&!x.saldoAnterior).length,nRg=a.aportes.filter(x=>x.valor<0).length;
         const ult=aps[0]?.data||'—';
         const aberto=invAberto===a.id;
         return`<div class="inv-item" onclick="toggleAtivo(${a.id})">
           <div class="inv-head">
             <div style="min-width:0;">
-              <div class="item-name">${esc(a.nome)}${cdi?` <span class="badge badge-blue">${a.pctCDI.toLocaleString('pt-BR')}% CDI</span>`:''}</div>
-              <div class="item-sub">${a.instituicao?esc(a.instituicao)+' · ':''}${a.aportes.length} aporte${a.aportes.length===1?'':'s'} · último ${ult}</div>
+              <div class="item-name">${esc(a.nome)}${cdi?` <span class="badge badge-blue">${a.pctCDI.toLocaleString('pt-BR')}% CDI</span>`:''}${a.ehSaldo?' <span class="badge badge-neutral" title="Guardar e tirar daqui não vira gasto nem entrada">💳 meu saldo</span>':''}</div>
+              <div class="item-sub">${a.instituicao?esc(a.instituicao)+' · ':''}${nAp} aporte${nAp===1?'':'s'}${nRg?` · ${nRg} resgate${nRg===1?'':'s'}`:''} · último ${ult}</div>
               ${cdi?`<div class="item-sub" style="color:var(--green);">rende ~${fmt(rendeMesCDI(a))}/mês</div>`:''}
             </div>
             <div style="text-align:right;flex-shrink:0;">
@@ -2844,8 +2965,8 @@ function renderInvestimentos(){
           ${aberto?`<div class="inv-detail" onclick="event.stopPropagation()">
             <div class="card-title" style="margin-bottom:4px;">Aportes</div>
             ${aps.map(ap=>`<div class="inv-ap-row">
-              <span>${ap.data}${ap.saldoAnterior?' <span class="badge badge-neutral" title="Dinheiro que já estava no investimento antes de começar a registrar">saldo anterior</span>':''}${ap.lancamentoId&&dados.some(d=>d.id===ap.lancamentoId)?' <span class="badge badge-purple" title="Vinculado a um lançamento">🔗 lançado</span>':''}</span>
-              <span style="display:flex;align-items:center;gap:4px;"><span style="font-family:var(--mono);color:var(--text);">${fmt(ap.valor)}</span>
+              <span>${ap.data}${ap.valor<0?' <span class="badge badge-red">resgate</span>':''}${ap.saldoAnterior?' <span class="badge badge-neutral" title="Dinheiro que já estava no investimento antes de começar a registrar">saldo anterior</span>':''}${ap.lancamentoId&&dados.some(d=>d.id===ap.lancamentoId)?' <span class="badge badge-purple" title="Vinculado a um lançamento">🔗 lançado</span>':''}</span>
+              <span style="display:flex;align-items:center;gap:4px;"><span style="font-family:var(--mono);color:var(--${ap.valor<0?'red':'text'});">${ap.valor<0?'−'+fmt(-ap.valor):fmt(ap.valor)}</span>
                 <button class="del-btn" onclick="excluirAporte(${a.id},${ap.id})" title="Excluir aporte"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></span>
             </div>`).join('')}
             ${(()=>{const dif=saldoNaoRegistrado(a);if(!dif)return'';const v=cdi?a.ancora.valor:va;return`<div class="hint-box" style="background:var(--amber-bg);margin:10px 0 0;">
@@ -2864,12 +2985,13 @@ function renderInvestimentos(){
             :`<div class="item-sub" style="margin-top:8px;">Valor atualizado em ${a.atualizadoEm||'—'}</div>`}
             <div class="inv-actions">
               <button class="btn btn-accent btn-sm" onclick="abrirNovoAporte(${a.id})">+ Novo aporte</button>
-              <button class="btn btn-outline btn-sm" onclick="abrirAtualizarValor(${a.id})">${cdi?'Corrigir pelo extrato':'Atualizar valor'}</button>
+              <button class="btn btn-outline btn-sm" onclick="abrirResgatar(${a.id})">💸 Resgatar</button>
             </div>
             <div class="inv-actions" style="margin-top:8px;">
+              <button class="btn btn-outline btn-sm" onclick="abrirAtualizarValor(${a.id})">${cdi?'Corrigir pelo extrato':'Atualizar valor'}</button>
               <button class="btn btn-outline btn-sm" onclick="abrirEditarInvest(${a.id})">Editar${cdi?'':' / % do CDI'}</button>
-              <button class="btn btn-outline btn-sm" style="color:var(--red);" onclick="excluirAtivo(${a.id})">Excluir</button>
             </div>
+            <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px;color:var(--red);" onclick="excluirAtivo(${a.id})">Excluir investimento</button>
           </div>`:''}
         </div>`;
       }).join('')}
@@ -2928,6 +3050,7 @@ document.getElementById('fix-inicio').addEventListener('input',maskMonthYear);
 document.getElementById('fix-fim').addEventListener('input',maskMonthYear);
 document.getElementById('inv-data').addEventListener('input',maskDate);
 document.getElementById('inv-ap-data').addEventListener('input',maskDate);
+document.getElementById('inv-rg-data').addEventListener('input',maskDate);
 
 // aplicar tema salvo imediatamente
 (function(){const t=localStorage.getItem('cf_tema')||'dark';aplicarTema(t);})();
