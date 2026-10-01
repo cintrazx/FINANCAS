@@ -419,6 +419,7 @@ input:disabled{opacity:.6;}
   <div class="user-sub">Quem vai usar agora?</div>
   <div class="user-cards" id="user-cards"></div>
   <div class="user-links" id="user-links"></div>
+  <div style="position:absolute;bottom:calc(14px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;font-size:11px;color:var(--text3);">versão 2.1</div>
 </div>
 
 <!-- TELA DE ONBOARDING (nova usuária) -->
@@ -444,6 +445,18 @@ input:disabled{opacity:.6;}
     <button class="btn btn-danger" id="del-user-btn" onclick="confirmarExcluirUsuario(false)">Excluir deste aparelho</button>
     <button class="btn btn-outline" id="del-user-btn-bk" style="margin-top:8px;" onclick="confirmarExcluirUsuario(true)">Baixar backup e excluir</button>
     <button class="btn btn-outline" style="margin-top:8px;" onclick="fecharModal('modal-del-user')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL: LEMBRETE SEMANAL DE BACKUP -->
+<div class="modal-overlay hidden" id="modal-lembrete-bk">
+  <div class="modal" style="position:relative;">
+    <div class="modal-title">💾 Hora de salvar uma cópia</div>
+    <div class="modal-sub" id="lembrete-bk-sub"></div>
+    <div class="hint-box">Se o app, o navegador ou o celular der problema, é com esse arquivo que você recupera tudo em Config → Importar backup.</div>
+    <button class="btn btn-accent" onclick="salvarBackupArquivo(true)">💾 Salvar no celular</button>
+    <button class="btn btn-outline" style="margin-top:8px;" onclick="adiarLembreteBackup()">Agora não</button>
+    <div style="text-align:center;margin-top:10px;"><button class="link-btn" onclick="salvarBackupArquivo(false)">ou só baixar o arquivo</button></div>
   </div>
 </div>
 
@@ -491,12 +504,9 @@ input:disabled{opacity:.6;}
     <button class="icon-btn modal-close" onclick="fecharModal('modal-apagar')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <div class="modal-title">⚠️ Apagar todos os dados</div>
-    <div class="modal-sub">Isso vai apagar todos os lançamentos, parcelamentos, gastos fixos e investimentos. Essa ação não pode ser desfeita. Tem certeza?</div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-outline" style="flex:1" onclick="fecharModal('modal-apagar')">Cancelar</button>
-      <button class="btn btn-danger" style="flex:1" onclick="apagarTudo()">Sim, apagar tudo</button>
-    </div>
+    <div class="modal-title" id="apagar-titulo">⚠️ Apagar todos os dados</div>
+    <div class="modal-sub" id="apagar-sub"></div>
+    <div id="apagar-botoes"></div>
   </div>
 </div>
 
@@ -837,7 +847,7 @@ input:disabled{opacity:.6;}
         <div class="settings-row">
           <div>
             <div class="settings-label">Exportar backup</div>
-            <div class="settings-sub">Baixar arquivo .json com todos os dados</div>
+            <div class="settings-sub" id="cfg-ultimo-bk">Baixar arquivo .json com todos os dados</div>
           </div>
           <button class="btn btn-outline btn-sm" onclick="exportarBackup()">Exportar</button>
         </div>
@@ -849,6 +859,11 @@ input:disabled{opacity:.6;}
           <input type="file" id="inp-backup2" accept=".json" style="display:none" onchange="importarBackup(event)"/>
           <button class="btn btn-outline btn-sm" onclick="document.getElementById('inp-backup2').click()">Importar</button>
         </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cópias automáticas</div>
+        <div class="settings-sub" style="margin-bottom:6px;line-height:1.5;">O app guarda sozinho uma cópia por dia e outra antes de qualquer mudança arriscada. Ficam só neste aparelho (as 10 mais recentes).</div>
+        <div id="cfg-snaps"></div>
       </div>
       <div class="card">
         <div class="card-title">Informações</div>
@@ -884,9 +899,9 @@ input:disabled{opacity:.6;}
         <div class="settings-row">
           <div>
             <div class="settings-label" style="color:var(--red);">Apagar todos os dados</div>
-            <div class="settings-sub">Remove tudo permanentemente</div>
+            <div class="settings-sub">Apaga os dados do usuário atual</div>
           </div>
-          <button class="btn btn-danger btn-sm" onclick="abrirModal('modal-apagar')">Apagar</button>
+          <button class="btn btn-danger btn-sm" onclick="abrirApagarTudo()">Apagar</button>
         </div>
       </div>
       <div class="card">
@@ -907,7 +922,7 @@ input:disabled{opacity:.6;}
         </div>
       </div>
       <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--text3);">
-        Minhas Finanças v2.0 · Dados salvos localmente no aparelho
+        Minhas Finanças v2.1 · Dados salvos localmente no aparelho
       </div>
     </div>
 
@@ -1063,26 +1078,138 @@ function toast(msg){
 function abrirModal(id){document.getElementById(id).classList.remove('hidden');}
 function fecharModal(id){document.getElementById(id).classList.add('hidden');}
 document.querySelectorAll('.modal-overlay').forEach(m=>{
-  m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden');});
+  m.addEventListener('click',e=>{if(e.target===m&&!m.dataset.fixo)m.classList.add('hidden');});
 });
 
 // ===== BACKUP =====
 function exportarBackup(){
-  const data={
-    versao:3,
-    exportadoEm:new Date().toISOString(),
-    dados,parcelas,fixos,investimentos,prefs,
-    categorias:{catsGasto:getCatsGasto(),catsEntrada:getCatsEntrada()}
-  };
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  const hoje=todayStr().replace(/\//g,'-');
-  a.href=url;a.download=`financas-backup-${hoje}.json`;
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(url);
-  toast('✓ Backup exportado!');
+  salvarBackupArquivo(false);
   fecharModal('modal-backup');
+}
+
+// ===== BACKUP: arquivo, lembrete semanal e cópias automáticas =====
+const DIA_MS=86400000;
+function diasDesde(ts){return Math.floor((Date.now()-ts)/DIA_MS);}
+function textoDias(ts){const d=diasDesde(ts);return d<=0?'hoje':d===1?'ontem':`há ${d} dias`;}
+function getBkInfo(){try{return JSON.parse(localStorage.getItem(storageKey(usuarioAtual.id,'bkinfo'))||'{}');}catch{return{};}}
+function setBkInfo(o){localStorage.setItem(storageKey(usuarioAtual.id,'bkinfo'),JSON.stringify(Object.assign(getBkInfo(),o)));}
+function montarBackup(){
+  return{versao:3,exportadoEm:new Date().toISOString(),usuario:usuarioAtual.nome,
+    dados,parcelas,fixos,investimentos,prefs,categorias:{catsGasto:getCatsGasto(),catsEntrada:getCatsEntrada()}};
+}
+function nomeArquivoBackup(){return`financas-backup-${normTxt(usuarioAtual.nome).replace(/[^a-z0-9]+/g,'-')}-${todayStr().replace(/\//g,'-')}.json`;}
+function baixarArquivo(blob,nome){
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=nome;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function backupFeito(msg){
+  setBkInfo({ultimo:Date.now()});
+  fecharModal('modal-lembrete-bk');
+  toast(msg);
+  if(abaAtual==='config')renderConfig();
+}
+// compartilhar=true: no celular abre o menu de compartilhar (Arquivos, Drive, WhatsApp...)
+async function salvarBackupArquivo(compartilhar){
+  const nome=nomeArquivoBackup();
+  const blob=new Blob([JSON.stringify(montarBackup(),null,2)],{type:'application/json'});
+  const toque=window.matchMedia&&matchMedia('(pointer:coarse)').matches;
+  if(compartilhar&&toque&&window.File&&navigator.canShare){
+    try{
+      const file=new File([blob],nome,{type:'application/json'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Backup Minhas Finanças',text:`Backup de ${usuarioAtual.nome} (${todayStr()})`});
+        backupFeito('✓ Cópia salva!');return;
+      }
+    }catch(e){
+      if(e&&e.name==='AbortError'){toast('Cópia não salva');return;}
+      // qualquer outro erro: cai no download normal
+    }
+  }
+  baixarArquivo(blob,nome);
+  backupFeito('✓ Backup baixado: '+nome);
+}
+function adiarLembreteBackup(){
+  setBkInfo({adiar:Date.now()+7*DIA_MS});
+  fecharModal('modal-lembrete-bk');
+  toast('Ok, lembro de novo na semana que vem');
+}
+function checarLembreteBackup(tentativa){
+  if(!usuarioAtual)return;
+  if(totalRegistros({dados,parcelas,fixos,investimentos})===0)return;
+  const i=getBkInfo(),agora=Date.now();
+  if(i.ultimo&&agora-i.ultimo<7*DIA_MS)return;
+  if(i.adiar&&agora<i.adiar)return;
+  // só logo ao abrir o app: não cobre outra janela nem interrompe quem está digitando.
+  // Se não der em ~10 s, desiste e tenta na próxima vez que o app for aberto.
+  const ae=document.activeElement,digitando=ae&&/INPUT|SELECT|TEXTAREA/.test(ae.tagName);
+  if(digitando||document.querySelector('.modal-overlay:not(.hidden)')||!document.getElementById('user-screen').classList.contains('hidden')){
+    if((tentativa||0)<3)setTimeout(()=>checarLembreteBackup((tentativa||0)+1),3000);
+    return;
+  }
+  document.getElementById('lembrete-bk-sub').innerHTML=i.ultimo
+    ?`Sua última cópia de <strong>${esc(usuarioAtual.nome)}</strong> foi salva ${textoDias(i.ultimo)}. Leva 2 segundos.`
+    :`Você ainda não salvou nenhuma cópia dos dados de <strong>${esc(usuarioAtual.nome)}</strong>. Leva 2 segundos.`;
+  abrirModal('modal-lembrete-bk');
+}
+
+// --- cópias automáticas (ficam no próprio navegador) ---
+const SNAP_MAX=10;
+function getSnaps(){try{return JSON.parse(localStorage.getItem(storageKey(usuarioAtual.id,'snaps'))||'[]');}catch{return[];}}
+function conteudoAtual(){return{dados,parcelas,fixos,investimentos,prefs,cats:{catsGasto:getCatsGasto(),catsEntrada:getCatsEntrada()}};}
+function criarSnapshot(motivo){
+  if(!usuarioAtual)return;
+  const c=conteudoAtual(),n=totalRegistros(c);
+  if(n===0)return;
+  let lista=getSnaps();
+  const json=JSON.stringify(c);
+  if(lista[0]&&JSON.stringify(lista[0].c)===json)return; // igual à última: não duplica
+  lista.unshift({ts:Date.now(),motivo,n,c});
+  lista=lista.slice(0,SNAP_MAX);
+  // se faltar espaço no navegador, descarta as mais antigas
+  while(lista.length){
+    try{localStorage.setItem(storageKey(usuarioAtual.id,'snaps'),JSON.stringify(lista));return;}
+    catch{lista.pop();}
+  }
+}
+function snapDiario(){
+  const l=getSnaps(),hoje=todayStr();
+  const ultDia=l.find(x=>x.motivo==='Cópia diária');
+  if(ultDia&&new Date(ultDia.ts).toLocaleDateString('pt-BR')===hoje)return;
+  criarSnapshot('Cópia diária');
+}
+function renderSnaps(){
+  const el=document.getElementById('cfg-snaps');if(!el)return;
+  const l=getSnaps();
+  if(!l.length){el.innerHTML='<div class="item-sub" style="padding:8px 0;">Nenhuma cópia ainda. A primeira é feita amanhã ao abrir o app, ou antes da próxima mudança arriscada.</div>';return;}
+  el.innerHTML=l.map((x,i)=>{
+    const d=new Date(x.ts);
+    return`<div class="settings-row" style="padding:9px 0;">
+      <div style="min-width:0;padding-right:10px;">
+        <div class="settings-label" style="font-size:13px;">${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="settings-sub">${esc(x.motivo)} · ${x.n} registro${x.n===1?'':'s'}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="restaurarSnapshot(${i})">Restaurar</button>
+    </div>`;
+  }).join('');
+}
+function restaurarSnapshot(i){
+  const x=getSnaps()[i];if(!x)return;
+  const d=new Date(x.ts),nAtual=totalRegistros(conteudoAtual());
+  perguntar('Restaurar esta cópia?',
+    `Volta os dados de <strong>${esc(usuarioAtual.nome)}</strong> para como estavam em <strong>${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</strong> (${x.n} registros). Hoje são ${nAtual}.<br><br>Antes, o app guarda uma cópia de como está agora, então dá para voltar atrás.${getSyncBinId()?'<br><br>☁️ A cópia restaurada também vai para a nuvem e os outros aparelhos.':''}`,
+    'Restaurar','Cancelar',
+    ()=>{
+      criarSnapshot('Antes de restaurar uma cópia');
+      const c=x.c;
+      dados=c.dados||[];parcelas=c.parcelas||[];fixos=c.fixos||[];investimentos=c.investimentos||[];
+      if(c.prefs)prefs=Object.assign(prefsPadrao(),c.prefs);
+      if(c.cats?.catsGasto?.length){usuarioAtual.catsGasto=[...c.cats.catsGasto];if(c.cats.catsEntrada?.length)usuarioAtual.catsEntrada=[...c.cats.catsEntrada];persistirUsuario();refreshCatSelects();}
+      syncConflito=false;
+      save();
+      populateMes();renderResumoDia();renderParcelas();renderConfig();
+      toast('✓ Cópia restaurada');
+    });
 }
 
 function importarBackup(event){
@@ -1095,6 +1222,7 @@ function importarBackup(event){
       if(!bk.dados||!Array.isArray(bk.dados)){toast('⚠ Arquivo inválido');return;}
       const ok=confirm(`Backup de ${bk.exportadoEm?new Date(bk.exportadoEm).toLocaleDateString('pt-BR'):'data desconhecida'}.\n${bk.dados.length} lançamentos, ${(bk.parcelas||[]).length} parcelamentos, ${(bk.fixos||[]).length} fixos e ${(bk.investimentos||[]).length} investimentos.\n\nIsso vai substituir seus dados atuais. Continuar?`);
       if(!ok)return;
+      criarSnapshot('Antes de importar um backup');
       dados=bk.dados;
       parcelas=bk.parcelas||[];
       // backups antigos não têm esses campos: mantém o que já existe
@@ -1117,11 +1245,40 @@ function importarBackup(event){
   event.target.value='';
 }
 
-function apagarTudo(){
-  dados=[];parcelas=[];fixos=[];investimentos=[];save();
+function totalRegistros(o){return(o.dados||[]).length+(o.parcelas||[]).length+(o.fixos||[]).length+(o.investimentos||[]).length;}
+function abrirApagarTudo(){
+  const n=totalRegistros({dados,parcelas,fixos,investimentos});
+  const temSync=!!getSyncBinId();
+  document.getElementById('apagar-titulo').textContent=`⚠️ Apagar os dados de ${usuarioAtual.nome}`;
+  document.getElementById('apagar-sub').innerHTML=`São <strong>${n} registro${n===1?'':'s'}</strong> (lançamentos, parcelamentos, fixos e investimentos). Uma cópia fica guardada neste aparelho em Config → Cópias automáticas, caso você se arrependa.`+
+    (temSync?`<br><br>☁️ <strong>A sincronização está ativa.</strong> Escolha onde apagar:`:'');
+  document.getElementById('apagar-botoes').innerHTML=temSync
+    ?`<button class="btn btn-danger" onclick="apagarTudo('local')">Apagar só deste aparelho</button>
+      <div class="item-sub" style="margin:6px 2px 12px;line-height:1.5;">Desconecta a sincronização. A nuvem e os outros aparelhos continuam com os dados.</div>
+      <button class="btn btn-outline" style="color:var(--red);border-color:rgba(248,113,113,.4);" onclick="apagarTudo('todos')">Apagar em todos os aparelhos</button>
+      <div class="item-sub" style="margin:6px 2px 12px;line-height:1.5;">Apaga também da nuvem. Os outros aparelhos vão perguntar antes de apagar.</div>
+      <button class="btn btn-outline" onclick="fecharModal('modal-apagar')">Cancelar</button>`
+    :`<div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" style="flex:1" onclick="fecharModal('modal-apagar')">Cancelar</button>
+        <button class="btn btn-danger" style="flex:1" onclick="apagarTudo('local')">Apagar deste aparelho</button>
+      </div>`;
+  abrirModal('modal-apagar');
+}
+async function apagarTudo(modo){
+  criarSnapshot('Antes de apagar tudo');
+  if(modo==='local'&&getSyncBinId()){
+    // só aqui: solta a nuvem ANTES de apagar, para nada ser enviado
+    localStorage.removeItem(syncStorageKey(usuarioAtual.id));
+    pararSyncTimer();
+    document.getElementById('sync-indicator').style.display='none';
+  }
+  dados=[];parcelas=[];fixos=[];investimentos=[];
+  if(modo==='todos')syncApagadoEm=Date.now(); // marca a exclusão como intencional
+  save();
+  if(modo==='todos'){await syncPush();syncApagadoEm=null;}
   populateMes();renderResumoDia();renderParcelas();
   fecharModal('modal-apagar');
-  toast('Todos os dados foram apagados.');
+  toast(modo==='todos'?'Dados apagados em todos os aparelhos.':'Dados apagados deste aparelho.');
   switchTab('lancar');
 }
 
@@ -2043,6 +2200,9 @@ function renderConfig(){
   document.getElementById('cfg-total-fix').textContent=fixos.length+' itens';
   document.getElementById('cfg-total-inv').textContent=investimentos.length+' ativos';
   document.getElementById('cfg-meta-inv').value=prefs.metaInvest||'';
+  const bi=getBkInfo();
+  document.getElementById('cfg-ultimo-bk').textContent=bi.ultimo?`Última cópia salva ${textoDias(bi.ultimo)}`:'Você ainda não salvou nenhuma cópia';
+  renderSnaps();
   renderCfgCats();
   document.getElementById('cfg-limites').innerHTML=getCatsGasto().filter(c=>!isCatInvest(c)).map(c=>`
     <div class="settings-row" style="padding:7px 0;">
@@ -2350,6 +2510,7 @@ function perguntar(titulo,html,sim,nao,onSim,onNao){
   abrirModal('modal-pergunta');
 }
 function responderPergunta(ok){
+  delete document.getElementById('modal-pergunta').dataset.fixo;
   fecharModal('modal-pergunta');
   const f=ok?_pergSim:_pergNao;_pergSim=_pergNao=null;
   if(f)f();
@@ -2771,7 +2932,7 @@ function renderUserCards(){
 }
 
 // ===== EXCLUIR USUÁRIO (só deste aparelho) =====
-const SUFIXOS_USUARIO=['dados','parcelas','fixos','investimentos','prefs','cats'];
+const SUFIXOS_USUARIO=['dados','parcelas','fixos','investimentos','prefs','cats','snaps','bkinfo'];
 let delUserId=null;
 function lerLocal(uid,t,def){try{return JSON.parse(localStorage.getItem(storageKey(uid,t))||'null')??def;}catch{return def;}}
 function dadosLocaisUsuario(uid){
@@ -2858,6 +3019,8 @@ function selecionarUsuario(uid){
 }
 
 function iniciarApp(){
+  snapDiario();
+  setTimeout(()=>checarLembreteBackup(0),1500);
   setTipo('gasto');
   document.getElementById('inp-data').value=todayStr();
   document.getElementById('p-inicio').value=pad(new Date().getMonth()+1)+'/'+new Date().getFullYear();
@@ -3021,8 +3184,12 @@ function setSyncBinId(id){localStorage.setItem(syncStorageKey(usuarioAtual.id),i
 
 function catsAtuais(){return{g:getCatsGasto(),e:getCatsEntrada()};}
 function dataHash(){return JSON.stringify({dados,parcelas,fixos,investimentos,prefs,cats:catsAtuais()});}
+let syncApagadoEm=null;   // preenchido só quando o usuário escolhe "apagar em todos os aparelhos"
+let syncConflito=false;   // nuvem vazia × aparelho com dados: sync pausado até o usuário decidir
 function syncPayload(){
-  return{dados,parcelas,fixos,investimentos,prefs,usuario:{id:usuarioAtual.id,nome:usuarioAtual.nome,emoji:usuarioAtual.emoji,catsGasto:usuarioAtual.catsGasto,catsEntrada:usuarioAtual.catsEntrada},ts:Date.now()};
+  const p={dados,parcelas,fixos,investimentos,prefs,usuario:{id:usuarioAtual.id,nome:usuarioAtual.nome,emoji:usuarioAtual.emoji,catsGasto:usuarioAtual.catsGasto,catsEntrada:usuarioAtual.catsEntrada},ts:Date.now()};
+  if(syncApagadoEm)p.apagadoEm=syncApagadoEm;
+  return p;
 }
 
 function setSyncIndicator(state,label){
@@ -3035,19 +3202,22 @@ function setSyncIndicator(state,label){
   lbl.textContent=label||'Sync';
 }
 
-async function syncPush(){
+async function syncPush(forcar){
   const binId=getSyncBinId();
-  if(!binId)return;
+  if(!binId||syncConflito)return;
   const hash=dataHash();
-  if(hash===lastSyncHash)return; // nada mudou
+  if(hash===lastSyncHash&&!forcar)return; // nada mudou
+  // nunca envia um aparelho vazio por cima da nuvem, a não ser na exclusão intencional
+  if(!syncApagadoEm&&totalRegistros({dados,parcelas,fixos,investimentos})===0)return;
   setSyncIndicator('syncing','Salvando...');
   try{
     const payload=syncPayload();
-    await fetch(`${JBIN_URL}/${binId}`,{
+    const res=await fetch(`${JBIN_URL}/${binId}`,{
       method:'PUT',
       headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY},
       body:JSON.stringify(payload)
     });
+    if(!res.ok)throw new Error('HTTP '+res.status);
     lastSyncHash=hash;
     setSyncIndicator('ok','Salvo ✓');
     atualizarCfgSyncStatus();
@@ -3056,7 +3226,7 @@ async function syncPush(){
 
 async function syncPull(){
   const binId=getSyncBinId();
-  if(!binId)return false;
+  if(!binId||syncConflito)return false;
   setSyncIndicator('syncing','Sincronizando...');
   try{
     const res=await fetch(`${JBIN_URL}/${binId}/latest`,{
@@ -3064,6 +3234,26 @@ async function syncPull(){
     });
     if(!res.ok){setSyncIndicator('err','Erro sync');return false;}
     const remote=await res.json();
+    // PROTEÇÃO: nuvem vazia e este aparelho com dados → pergunta antes de apagar qualquer coisa
+    const nLocal=totalRegistros({dados,parcelas,fixos,investimentos});
+    if(nLocal>0&&totalRegistros(remote)===0){
+      syncConflito=true;
+      setSyncIndicator('err','Aguardando você');
+      const quando=remote.apagadoEm?new Date(remote.apagadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):null;
+      document.getElementById('modal-pergunta').dataset.fixo='1';
+      perguntar('☁️ A nuvem está vazia',
+        `Os dados de <strong>${esc(usuarioAtual.nome)}</strong> na nuvem foram apagados${quando?` em outro aparelho (${quando})`:''}, mas <strong>este aparelho ainda tem ${nLocal} registro${nLocal===1?'':'s'}</strong>.<br><br>`+
+        (quando?'Quer restaurar a nuvem com os dados deste aparelho, ou apagar daqui também?':'Restaurar a nuvem com os dados deste aparelho? Os outros aparelhos recebem tudo de volta.'),
+        'Restaurar a nuvem',quando?'Apagar daqui também':'Agora não',
+        async()=>{syncConflito=false;await syncPush(true);toast('✓ Nuvem restaurada com os dados deste aparelho');},
+        quando
+          ?()=>{criarSnapshot('Antes de apagar (pedido de outro aparelho)');syncConflito=false;dados=[];parcelas=[];fixos=[];investimentos=[];
+               localStorage.setItem(storageKey(usuarioAtual.id,'dados'),'[]');localStorage.setItem(storageKey(usuarioAtual.id,'parcelas'),'[]');
+               localStorage.setItem(storageKey(usuarioAtual.id,'fixos'),'[]');localStorage.setItem(storageKey(usuarioAtual.id,'investimentos'),'[]');
+               lastSyncHash=dataHash();populateMes();renderResumoDia();renderParcelas();rerenderAbaAtual();setSyncIndicator('ok','Atualizado ✓');toast('Dados apagados deste aparelho');}
+          :()=>{toast('Nada foi apagado. A sincronização fica pausada até você decidir.');});
+      return false;
+    }
     // só atualiza se dados remotos são mais recentes
     const localHash=dataHash();
     // campos novos ausentes no remoto (versão antiga em outro aparelho) preservam o local
@@ -3072,6 +3262,7 @@ async function syncPull(){
     const rCats=Array.isArray(ru.catsGasto)&&ru.catsGasto.length?{g:ru.catsGasto,e:Array.isArray(ru.catsEntrada)&&ru.catsEntrada.length?ru.catsEntrada:getCatsEntrada()}:catsAtuais();
     const remoteHash=JSON.stringify({dados:remote.dados,parcelas:remote.parcelas,fixos:rFix,investimentos:rInv,prefs:rPrefs,cats:rCats});
     if(remoteHash!==localHash){
+      if(totalRegistros(remote)<nLocal)criarSnapshot('Antes de sincronizar (a nuvem tinha menos dados)');
       dados=remote.dados||[];
       parcelas=remote.parcelas||[];
       fixos=rFix;investimentos=rInv;prefs=Object.assign(prefsPadrao(),rPrefs);
@@ -3114,6 +3305,17 @@ async function entrarComCodigo(codigo){
     if(!res.ok)throw new Error('not found');
     const remote=await res.json();
     if(!remote.dados)throw new Error('invalid');
+    const nLocal=totalRegistros({dados,parcelas,fixos,investimentos}),nRemoto=totalRegistros(remote);
+    if(nLocal>0&&nRemoto===0){
+      // nuvem vazia: oferece enviar os dados deste aparelho para ela
+      if(!confirm(`A nuvem desse código está vazia, e ${usuarioAtual.nome} tem ${nLocal} registro(s) neste aparelho.\n\nConectar e enviar os dados deste aparelho para a nuvem?`)){setSyncIndicator('','');document.getElementById('sync-indicator').style.display='none';return'cancelado';}
+      setSyncBinId(binId);syncConflito=false;
+      await syncPush(true);
+      iniciarSyncTimer();setSyncIndicator('ok','Conectado ✓');atualizarCfgSyncStatus();
+      return true;
+    }
+    if(nLocal>0)criarSnapshot('Antes de conectar um código de sync');
+    if(nLocal>0&&!confirm(`Atenção: ${usuarioAtual.nome} já tem ${nLocal} registro(s) neste aparelho.\n\nConectar a esse código vai SUBSTITUIR esses dados pelos ${nRemoto} registro(s) da nuvem${remote.usuario?.nome?' ('+remote.usuario.nome+')':''}.\n\nSe esse código for de outra pessoa, cancele e crie um usuário separado para ela.\n\nContinuar?`)){setSyncIndicator('','');document.getElementById('sync-indicator').style.display='none';return'cancelado';}
     setSyncBinId(binId);
     dados=remote.dados||[];
     parcelas=remote.parcelas||[];
@@ -3243,6 +3445,7 @@ async function ativarSyncCodigo(){
   const btn=document.querySelector('#sync-modal-body .btn-accent');
   if(btn){btn.disabled=true;btn.textContent='Verificando...';}
   const ok=await entrarComCodigo(binId);
+  if(ok==='cancelado'){if(btn){btn.disabled=false;btn.textContent='Conectar';}return;}
   if(ok){renderSyncModal();toast('✓ Sincronizado com sucesso!');}
   else{toast('⚠ Código inválido ou sem conexão');if(btn){btn.disabled=false;btn.textContent='Conectar';}}
 }
