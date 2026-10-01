@@ -231,6 +231,17 @@ scrollbar-width:none;
 .user-card-name{font-size:16px;font-weight:600;color:var(--text);}
 .user-card-sub{font-size:12px;color:var(--text3);margin-top:2px;}
 .user-card-arrow{color:var(--text3);font-size:18px;}
+.user-card.modo-del{border-color:rgba(248,113,113,.35);}
+.user-card.modo-del .user-card-arrow{color:var(--red);display:flex;}
+.user-links{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:22px;}
+.link-btn{background:none;border:none;color:var(--text3);font-family:var(--font);font-size:13px;cursor:pointer;padding:6px 10px;border-radius:6px;}
+.link-btn:hover{color:var(--text);}
+.link-btn.accent{color:var(--accent2);font-weight:600;}
+#modal-del-user{z-index:450;}
+.del-resumo{background:var(--surface2);border-radius:var(--radius-sm);padding:4px 12px;margin-bottom:12px;}
+.del-resumo div{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);}
+.del-resumo div:last-child{border-bottom:none;}
+.del-resumo b{font-family:var(--mono);font-weight:500;color:var(--text);}
 
 /* ONBOARDING */
 .onboard-screen{position:fixed;inset:0;background:var(--bg);z-index:410;display:flex;flex-direction:column;padding:0;max-width:480px;margin:0 auto;overflow:hidden;}
@@ -407,6 +418,7 @@ input:disabled{opacity:.6;}
   <div class="user-title">Minhas Finanças</div>
   <div class="user-sub">Quem vai usar agora?</div>
   <div class="user-cards" id="user-cards"></div>
+  <div class="user-links" id="user-links"></div>
 </div>
 
 <!-- TELA DE ONBOARDING (nova usuária) -->
@@ -420,6 +432,18 @@ input:disabled{opacity:.6;}
   <div class="onboard-body" id="ob-body"></div>
   <div class="onboard-footer">
     <button class="btn btn-accent" id="ob-next-btn" onclick="obNext()">Continuar</button>
+  </div>
+</div>
+
+<!-- MODAL: EXCLUIR USUÁRIO DESTE APARELHO -->
+<div class="modal-overlay hidden" id="modal-del-user">
+  <div class="modal" style="position:relative;">
+    <div class="modal-title" id="del-user-titulo"></div>
+    <div class="modal-sub" id="del-user-sub"></div>
+    <div id="del-user-corpo"></div>
+    <button class="btn btn-danger" id="del-user-btn" onclick="confirmarExcluirUsuario(false)">Excluir deste aparelho</button>
+    <button class="btn btn-outline" id="del-user-btn-bk" style="margin-top:8px;" onclick="confirmarExcluirUsuario(true)">Baixar backup e excluir</button>
+    <button class="btn btn-outline" style="margin-top:8px;" onclick="fecharModal('modal-del-user')">Cancelar</button>
   </div>
 </div>
 
@@ -874,6 +898,13 @@ input:disabled{opacity:.6;}
           </div>
           <button class="btn btn-outline btn-sm" onclick="abrirTelaUsuario()">Trocar</button>
         </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Gerenciar usuários</div>
+            <div class="settings-sub">Excluir usuários só deste aparelho</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="abrirTelaUsuario(true)">Gerenciar</button>
+        </div>
       </div>
       <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--text3);">
         Minhas Finanças v2.0 · Dados salvos localmente no aparelho
@@ -978,9 +1009,12 @@ function save(){
   localStorage.setItem(storageKey(usuarioAtual.id,'prefs'),JSON.stringify(prefs));
 }
 
+// usuários fixos (Sergio) escondidos neste aparelho
+function getOcultos(){try{return JSON.parse(localStorage.getItem('cf_usuarios_ocultos')||'[]');}catch{return[];}}
 function getUsuarios(){
   const extra=JSON.parse(localStorage.getItem('cf_usuarios')||'[]');
-  return[SERGIO,...extra];
+  const oc=getOcultos();
+  return[SERGIO,...extra].filter(u=>!oc.includes(u.id));
 }
 
 function saveUsuariosExtra(lista){
@@ -2688,10 +2722,13 @@ document.getElementById('inv-ap-data').addEventListener('input',maskDate);
 (function(){const t=localStorage.getItem('cf_tema')||'dark';aplicarTema(t);})();
 
 // ===== SELEÇÃO DE USUÁRIO =====
-function abrirTelaUsuario(){
+let gerenciandoUsuarios=false;
+function abrirTelaUsuario(gerenciar){
+  gerenciandoUsuarios=!!gerenciar;
   document.getElementById('user-screen').classList.remove('hidden');
   renderUserCards();
 }
+function toggleGerenciarUsuarios(){gerenciandoUsuarios=!gerenciandoUsuarios;renderUserCards();}
 
 function fecharTelaUsuario(){
   document.getElementById('user-screen').classList.add('hidden');
@@ -2699,18 +2736,23 @@ function fecharTelaUsuario(){
 
 function renderUserCards(){
   const usuarios=getUsuarios();
-  document.getElementById('user-cards').innerHTML=usuarios.map(u=>`
-    <div class="user-card" onclick="selecionarUsuario('${u.id}')">
+  if(!usuarios.length)gerenciandoUsuarios=false;
+  const g=gerenciandoUsuarios;
+  document.querySelector('#user-screen .user-sub').textContent=g?'Toque no usuário que quer excluir deste aparelho':'Quem vai usar agora?';
+  const TRASH='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
+  const cards=usuarios.map(u=>`
+    <div class="user-card${g?' modo-del':''}" onclick="${g?`abrirExcluirUsuario('${u.id}')`:`selecionarUsuario('${u.id}')`}">
       <div class="user-card-avatar" style="background:${u.id==='sergio'?'rgba(124,111,247,.2)':'rgba(74,222,128,.2)'}">
         ${u.emoji||'👤'}
       </div>
       <div class="user-card-info">
-        <div class="user-card-name">${u.nome}</div>
-        <div class="user-card-sub">${u.fixed?'Conta principal':'Conta pessoal'}</div>
+        <div class="user-card-name">${esc(u.nome)}</div>
+        <div class="user-card-sub">${u.fixed?'Conta principal':'Conta pessoal'}${usuarioAtual?.id===u.id?' · em uso':''}</div>
       </div>
-      <div class="user-card-arrow">›</div>
+      <div class="user-card-arrow">${g?TRASH:'›'}</div>
     </div>
-  `).join('')+`
+  `).join('');
+  document.getElementById('user-cards').innerHTML=cards+(g?'':`
     <div class="user-card" onclick="iniciarOnboarding()" style="border-style:dashed;">
       <div class="user-card-avatar" style="background:rgba(251,191,36,.15)">➕</div>
       <div class="user-card-info">
@@ -2718,7 +2760,91 @@ function renderUserCards(){
         <div class="user-card-sub">Criar conta com categorias próprias</div>
       </div>
       <div class="user-card-arrow">›</div>
-    </div>`;
+    </div>`);
+  // links de baixo
+  const oc=getOcultos();
+  let links='';
+  if(usuarios.length)links+=`<button class="link-btn ${g?'accent':''}" onclick="toggleGerenciarUsuarios()">${g?'✓ Concluir':'⚙️ Gerenciar usuários'}</button>`;
+  if(oc.includes('sergio'))links+=`<button class="link-btn" onclick="restaurarSergio()">↺ Mostrar ${SERGIO.nome} de novo</button>`;
+  if(usuarioAtual&&getUsuarios().some(u=>u.id===usuarioAtual.id))links+=`<button class="link-btn" onclick="gerenciandoUsuarios=false;fecharTelaUsuario()">‹ Voltar para ${esc(usuarioAtual.nome)}</button>`;
+  document.getElementById('user-links').innerHTML=links;
+}
+
+// ===== EXCLUIR USUÁRIO (só deste aparelho) =====
+const SUFIXOS_USUARIO=['dados','parcelas','fixos','investimentos','prefs','cats'];
+let delUserId=null;
+function lerLocal(uid,t,def){try{return JSON.parse(localStorage.getItem(storageKey(uid,t))||'null')??def;}catch{return def;}}
+function dadosLocaisUsuario(uid){
+  const u=[SERGIO,...JSON.parse(localStorage.getItem('cf_usuarios')||'[]')].find(x=>x.id===uid);
+  let dados=lerLocal(uid,'dados',[]),parcelas=lerLocal(uid,'parcelas',[]);
+  // Sergio pode ter dados antigos ainda sem prefixo
+  if(uid==='sergio'){
+    if(!dados.length)try{dados=JSON.parse(localStorage.getItem('cf_dados')||'[]');}catch{}
+    if(!parcelas.length)try{parcelas=JSON.parse(localStorage.getItem('cf_parcelas')||'[]');}catch{}
+  }
+  const cats=lerLocal(uid,'cats',null);
+  return{u,dados,parcelas,fixos:lerLocal(uid,'fixos',[]),investimentos:lerLocal(uid,'investimentos',[]),prefs:lerLocal(uid,'prefs',null),
+    categorias:{catsGasto:cats?.catsGasto||u?.catsGasto||[],catsEntrada:cats?.catsEntrada||u?.catsEntrada||[]},
+    sync:localStorage.getItem(syncStorageKey(uid))};
+}
+function abrirExcluirUsuario(uid){
+  const d=dadosLocaisUsuario(uid);if(!d.u)return;
+  delUserId=uid;
+  const total=d.dados.length+d.parcelas.length+d.fixos.length+d.investimentos.length;
+  document.getElementById('del-user-titulo').textContent=`Excluir ${d.u.nome} deste aparelho?`;
+  document.getElementById('del-user-sub').innerHTML=total
+    ?'Isso apaga daqui os dados abaixo. <strong>Não dá para desfazer.</strong> Os outros aparelhos não são afetados.'
+    :'Esse usuário não tem dados salvos neste aparelho. Os outros aparelhos não são afetados.';
+  document.getElementById('del-user-corpo').innerHTML=(total?`<div class="del-resumo">
+      <div>Lançamentos<b>${d.dados.length}</b></div>
+      <div>Parcelamentos<b>${d.parcelas.length}</b></div>
+      <div>Gastos fixos<b>${d.fixos.length}</b></div>
+      <div>Investimentos<b>${d.investimentos.length}</b></div>
+    </div>`:'')+
+    (d.sync
+      ?`<div class="hint-box">☁️ A sincronização está ativa: os dados continuam na nuvem. Para trazer de volta, crie o usuário de novo e use o código <strong style="font-family:var(--mono);word-break:break-all;">${esc(d.sync)}</strong> em Config → Sincronização.</div>`
+      :(total?`<div class="hint-box" style="background:var(--red-bg);">⚠️ Sem sincronização: se não baixar um backup, esses dados se perdem.</div>`:''))+
+    (uid==='sergio'?`<div class="item-sub" style="margin-bottom:12px;">${SERGIO.nome} é a conta principal do app: ele fica escondido e dá para mostrar de novo (vazio) pelo link "Mostrar ${SERGIO.nome} de novo".</div>`:'');
+  document.getElementById('del-user-btn-bk').style.display=total?'block':'none';
+  abrirModal('modal-del-user');
+}
+function baixarBackupUsuario(d){
+  const data={versao:3,exportadoEm:new Date().toISOString(),usuario:d.u.nome,dados:d.dados,parcelas:d.parcelas,fixos:d.fixos,investimentos:d.investimentos,prefs:d.prefs||undefined,categorias:d.categorias};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=`financas-backup-${normTxt(d.u.nome).replace(/[^a-z0-9]+/g,'-')}-${todayStr().replace(/\//g,'-')}.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function confirmarExcluirUsuario(comBackup){
+  const uid=delUserId;if(!uid)return;
+  const d=dadosLocaisUsuario(uid);if(!d.u){fecharModal('modal-del-user');return;}
+  if(comBackup)baixarBackupUsuario(d);
+  // apaga os dados deste usuário neste aparelho
+  SUFIXOS_USUARIO.forEach(t=>localStorage.removeItem(storageKey(uid,t)));
+  localStorage.removeItem(syncStorageKey(uid));
+  if(uid==='sergio'){
+    localStorage.removeItem('cf_dados');localStorage.removeItem('cf_parcelas'); // dados antigos sem prefixo
+    const oc=getOcultos();if(!oc.includes('sergio'))oc.push('sergio');
+    localStorage.setItem('cf_usuarios_ocultos',JSON.stringify(oc));
+  }else{
+    saveUsuariosExtra(JSON.parse(localStorage.getItem('cf_usuarios')||'[]').filter(x=>x.id!==uid));
+  }
+  // se era o usuário aberto, fecha a sessão dele
+  if(usuarioAtual?.id===uid){
+    pararSyncTimer();
+    usuarioAtual=null;dados=[];parcelas=[];fixos=[];investimentos=[];prefs=prefsPadrao();
+    document.getElementById('sync-indicator').style.display='none';
+  }
+  delUserId=null;
+  fecharModal('modal-del-user');
+  renderUserCards();
+  toast(`${d.u.nome} excluído deste aparelho`+(comBackup?' (backup baixado)':''));
+}
+function restaurarSergio(){
+  localStorage.setItem('cf_usuarios_ocultos',JSON.stringify(getOcultos().filter(x=>x!=='sergio')));
+  renderUserCards();
+  toast(SERGIO.nome+' voltou para a lista');
 }
 
 function selecionarUsuario(uid){
